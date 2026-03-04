@@ -1,0 +1,461 @@
+#!/bin/bash
+set -e
+set -u
+set -o pipefail
+
+# Configuration
+DOTFILES_CLAUDE="${HOME}/.claude"
+TEMPLATE_DIR="${HOME}/dotfiles/bin/bin/templates"
+
+# Default options
+FORCE=false
+ALL=false
+UPDATE=false
+NO_CLAUDE_MD=false
+AGENTS_ONLY=false
+COMMANDS_ONLY=false
+TRACK_THOUGHTS=false
+TARGET_DIR="."
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+show_help() {
+    cat << 'EOF'
+claude-init - Initialize Claude Code configuration for a project
+
+USAGE:
+    claude-init [OPTIONS] [TARGET_DIR]
+
+OPTIONS:
+    -h, --help          Show this help message
+    -f, --force         Overwrite existing .claude directory
+    -a, --all           Also copy agents, commands, and hooks from dotfiles
+    -u, --update        Update/refresh configs from dotfiles
+    --no-claude-md      Skip CLAUDE.md creation
+    --agents-only       Only copy agents (use with --all)
+    --commands-only     Only copy commands (use with --all)
+    --track-thoughts    Don't add .thoughts/ to .gitignore (track in git)
+
+ARGUMENTS:
+    TARGET_DIR          Target directory (default: current directory)
+
+EXAMPLES:
+    # Initialize current directory (creates .claude/ + CLAUDE.md)
+    claude-init
+
+    # Initialize with all configs from dotfiles
+    claude-init --all
+
+    # Initialize specific directory
+    claude-init ~/projects/my-app
+
+    # Initialize with all configs in specific directory
+    claude-init --all ~/projects/my-app
+
+    # Update existing configs from dotfiles
+    claude-init --update
+
+NOTES:
+    - Source configs are read from: ~/{DOTFILES_CLAUDE}/ (default: ~/.claude/)
+    - Creates .claude/{agents,commands,hooks}/ and .thoughts/ directories
+    - Adds .claude/settings.local.json and .thoughts/ to .gitignore
+EOF
+    exit 0
+}
+
+
+log_info() {
+    echo -e "${BLUE}$1${NC}"
+}
+
+log_success() {
+    echo -e "${GREEN}$1${NC}"
+}
+
+log_warning() {
+    echo -e "${YELLOW}$1${NC}"
+}
+
+log_error() {
+    echo -e "${RED}$1${NC}"
+}
+
+ensure_gitignore_entry() {
+    local target_dir="$1"
+    local entry="$2"
+    local gitignore_path="${target_dir}/.gitignore"
+
+    if [[ -f "${gitignore_path}" ]]; then
+        if grep -qxF "$entry" "${gitignore_path}"; then
+            return 0 # Already exists
+        fi
+    fi
+
+    # Add entry with section comment
+    {
+        echo ""
+        echo "# Claude Code local settings"
+        echo "$entry"
+    } >> "${gitignore_path}"
+
+    log_info "   Added $entry to .gitignore"
+}
+
+copy_directory() {
+    local src="$1"
+    local dest="$2"
+    local name="$3"
+
+    if [[ ! -d "$src" ]]; then
+        log_warning "   Source directory not found $src"
+        return 1
+    fi
+
+    mkdir -p "$dest"
+
+    local count=0
+    for file in "$src"/*; do
+        if [[ -f "$file" ]]; then
+            cp "$file" "$dest/"
+            ((count++))
+        elif [[ -d "$file" ]]; then
+            cp -r "$file" "$dest/"
+            ((count++))
+        fi
+    done
+
+    log_success "   Copied $count $name to $dest"
+    return 0
+}
+
+copy_with_update() {
+    local src="$1"
+    local dest="$2"
+    local name="$3"
+
+    if [[ ! -d "$src" ]]; then
+        log_warning "   Source directory not found: $src"
+        return 1
+    fi
+
+    mkdir -p "$dest"
+
+    local copied=0
+    local skipped=0
+    local updated=0
+
+    for file in "$src"/*; do
+        if [[ -f "$file" ]]; then
+            local filename
+            filename=$(basename "$file")
+            local dest_file="${dest}/${filename}"
+
+            if [[ ! -f "$dest_file" ]]; then
+                cp "$file" "$dest_file"
+                ((copied++))
+            elif cmp -s "$file" "$dest_file"; then
+                ((skipped++))
+            else
+                if [[ "$FORCE" == true ]]; then
+                    cp "$file" "$dest_file"
+                    ((updated++))
+                else
+                    log_warning "   Skipped (differs): $filename (use --force to overwrite)"
+                fi
+            fi
+        elif [[ -d "$file" ]]; then
+            local subdir_name
+            subdir_name=$(basename "$file")
+            copy_with_update "$file" "${dest}/${subdir_name}" "$subdir_name"
+        fi
+    done
+
+    log_info "   $name: $copied new, $updated updated, $skipped unchanged"
+    return 0
+}
+
+generate_pipeline_md() {
+    local target_dir="$1"
+    local template_file="${TEMPLATE_DIR}/PIPELINE.md.template"
+    local output_file="${target_dir}/.thoughts/PIPELINE.md"
+
+    if [[ ! -f "$template_file" ]]; then
+        log_warning "   PIPELINE.md template not found: $template_file"
+        return 0
+    fi
+
+    mkdir -p "${target_dir}/.thoughts"
+
+    if [[ -f "$output_file" ]] && [[ "$FORCE" != true ]]; then
+        log_warning "   .thoughts/PIPELINE.md already exists (use --force to overwrite)"
+        return 0
+    fi
+
+    cp "$template_file" "$output_file"
+    log_success "   Created .thoughts/PIPELINE.md"
+}
+
+generate_claude_md() {
+    local target_dir="$1"
+    local template_file="${TEMPLATE_DIR}/CLAUDE.md.template"
+    local output_file="${target_dir}/CLAUDE.md"
+
+    if [[ ! -f "$template_file" ]]; then
+        log_error "   Template not found: $template_file"
+        return 1
+    fi
+
+    if [[ -f "$output_file" ]] && [[ "$FORCE" != true ]]; then
+        log_warning "   CLAUDE.md already exists (use --force to overwrite)"
+        return 0
+    fi
+
+    cp "$template_file" "$output_file"
+    log_success "   Created CLAUDE.md"
+}
+
+update_claude_md() {
+    local target_dir="$1"
+    local template_file="${TEMPLATE_DIR}/CLAUDE.md.template"
+    local output_file="${target_dir}/CLAUDE.md"
+
+    if [[ ! -f "$template_file" ]]; then
+        log_error "   Template not found: $template_file"
+        return 1
+    fi
+
+    if [[ ! -f "$output_file" ]]; then
+        cp "$template_file" "$output_file"
+        log_success "   Created CLAUDE.md from template"
+        return 0
+    fi
+
+    # Find ## headings in template that are missing from existing file
+    local added=0
+    while IFS= read -r heading; do
+        if ! grep -qxF "$heading" "$output_file"; then
+            # Extract section from template (heading to next ## heading or EOF)
+            local section_file
+            section_file=$(mktemp)
+            awk -v h="$heading" '
+                $0 == h { found=1 }
+                found && /^## / && $0 != h { exit }
+                found { print }
+            ' "$template_file" > "$section_file"
+
+            # Find next template heading that exists in the output file
+            local insert_before=""
+            local past_current=false
+            while IFS= read -r h; do
+                if [[ "$past_current" == true ]] && grep -qxF "$h" "$output_file"; then
+                    insert_before="$h"
+                    break
+                fi
+                [[ "$h" == "$heading" ]] && past_current=true
+            done < <(grep '^## ' "$template_file")
+
+            if [[ -n "$insert_before" ]]; then
+                # Insert section before the anchor heading
+                local tmp_file
+                tmp_file=$(mktemp)
+                awk -v before="$insert_before" -v sfile="$section_file" '
+                    $0 == before {
+                        while ((getline line < sfile) > 0) print line
+                        close(sfile)
+                        print ""
+                    }
+                    { print }
+                ' "$output_file" > "$tmp_file"
+                mv "$tmp_file" "$output_file"
+            else
+                # No anchor found, append to end
+                echo "" >> "$output_file"
+                cat "$section_file" >> "$output_file"
+            fi
+
+            rm -f "$section_file"
+            log_success "   CLAUDE.md: added section \"${heading:3}\""
+            ((added++))
+        fi
+    done < <(grep '^## ' "$template_file")
+
+    if [[ $added -eq 0 ]]; then
+        log_info "   CLAUDE.md: up to date"
+    fi
+}
+
+validate_source() {
+    if [[ ! -d "$DOTFILES_CLAUDE" ]]; then
+        log_error "Source directory not found: $DOTFILES_CLAUDE"
+        log_error "Make sure your dotfiles are set up correctly."
+        exit 1
+    fi
+}
+
+check_existing() {
+    local target_dir="$1"
+    local claude_dir="${target_dir}/.claude"
+
+    if [[ -d "$claude_dir" ]]; then
+        if [[ "$FORCE" != true ]] && [[ "$UPDATE" != true ]]; then
+            log_error ".claude directory already exists at: $claude_dir"
+            log_error "Use --force to overwrite or --update to sync"
+            exit 1
+        fi
+    fi
+}
+
+main() {
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                ;;
+            -f|--force)
+                FORCE=true
+                shift
+                ;;
+            -a|--all)
+                ALL=true
+                shift
+                ;;
+            -u|--update)
+                UPDATE=true
+                shift
+                ;;
+            --no-claude-md)
+                NO_CLAUDE_MD=true
+                shift
+                ;;
+            --agents-only)
+                AGENTS_ONLY=true
+                shift
+                ;;
+            --commands-only)
+                COMMANDS_ONLY=true
+                shift
+                ;;
+            --track-thoughts)
+                TRACK_THOUGHTS=true
+                shift
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                show_help
+                ;;
+            *)
+                TARGET_DIR="$1"
+                shift
+                ;;
+        esac
+    done
+
+    # Resolve target directory
+    TARGET_DIR=$(cd "$TARGET_DIR" && pwd)
+    local claude_dir="${TARGET_DIR}/.claude"
+
+    echo ""
+    log_info "Initializing Claude Code configuration"
+    log_info "Target: $TARGET_DIR"
+    echo ""
+
+    # Validate
+    validate_source
+    check_existing "$TARGET_DIR"
+
+    # Handle update mode
+    if [[ "$UPDATE" == true ]]; then
+        if [[ ! -d "$claude_dir" ]]; then
+            log_error ".claude directory doesn't exist. Use --all to create it."
+            exit 1
+        fi
+
+        log_info "Updating from dotfiles..."
+
+        if [[ "$COMMANDS_ONLY" != true ]]; then
+            copy_with_update "${DOTFILES_CLAUDE}/agents" "${claude_dir}/agents" "agents"
+        fi
+        if [[ "$AGENTS_ONLY" != true ]]; then
+            copy_with_update "${DOTFILES_CLAUDE}/commands" "${claude_dir}/commands" "commands"
+        fi
+        if [[ "$NO_CLAUDE_MD" != true ]] && [[ "$AGENTS_ONLY" != true ]] && [[ "$COMMANDS_ONLY" != true ]]; then
+            update_claude_md "$TARGET_DIR"
+        fi
+        if [[ "$AGENTS_ONLY" != true ]] && [[ "$COMMANDS_ONLY" != true ]]; then
+            generate_pipeline_md "$TARGET_DIR"
+        fi
+
+        log_success "Update complete!"
+        exit 0
+    fi
+
+    # Create directory structure
+    log_info "Creating directory structure..."
+    mkdir -p "${claude_dir}/agents"
+    mkdir -p "${claude_dir}/commands"
+    mkdir -p "${claude_dir}/hooks"
+    mkdir -p "${TARGET_DIR}/.thoughts/research"
+    mkdir -p "${TARGET_DIR}/.thoughts/plans"
+    mkdir -p "${TARGET_DIR}/.thoughts/designs"
+    mkdir -p "${TARGET_DIR}/.thoughts/structures"
+    mkdir -p "${TARGET_DIR}/.thoughts/tickets"
+    mkdir -p "${TARGET_DIR}/.thoughts/prs"
+    mkdir -p "${TARGET_DIR}/.thoughts/reviews"
+    mkdir -p "${TARGET_DIR}/.thoughts/tickets"
+    log_success "   Created .claude/{agents,commands,hooks}/ and .thoughts/"
+
+    # Generate CLAUDE.md
+    if [[ "$NO_CLAUDE_MD" != true ]]; then
+        log_info "Creating CLAUDE.md..."
+        generate_claude_md "$TARGET_DIR"
+    fi
+
+    # Generate .thoughts/PIPELINE.md
+    log_info "Creating .thoughts/PIPELINE.md..."
+    generate_pipeline_md "$TARGET_DIR"
+
+    # Update gitignore
+    ensure_gitignore_entry "$TARGET_DIR" ".claude/settings.local.json"
+    if [[ "$TRACK_THOUGHTS" != true ]]; then
+        ensure_gitignore_entry "$TARGET_DIR" ".thoughts/"
+    fi
+
+    # Copy configs from dotfiles (only with --all)
+    if [[ "$ALL" == true ]]; then
+        log_info "Copying configurations from dotfiles..."
+
+        if [[ "$COMMANDS_ONLY" != true ]]; then
+            copy_directory "${DOTFILES_CLAUDE}/agents" "${claude_dir}/agents" "agents"
+        fi
+
+        if [[ "$AGENTS_ONLY" != true ]]; then
+            copy_directory "${DOTFILES_CLAUDE}/commands" "${claude_dir}/commands" "commands"
+        fi
+
+        # Copy hooks if they exist
+        if [[ -d "${DOTFILES_CLAUDE}/hooks" ]]; then
+            copy_directory "${DOTFILES_CLAUDE}/hooks" "${claude_dir}/hooks" "hooks"
+        fi
+    fi
+
+    echo ""
+    log_success "Initialization complete!"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Edit CLAUDE.md to add project-specific info"
+    if [[ "$ALL" != true ]]; then
+        echo "  2. Run with --all to also copy agents/commands/hooks from dotfiles"
+        echo "  3. Run Claude Code in your project"
+    else
+        echo "  2. Customize agents/commands as needed"
+        echo "  3. Run Claude Code in your project"
+    fi
+}
+
+main "$@"
