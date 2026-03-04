@@ -13,6 +13,24 @@ research/   designs/   plans/     tests +
                                   commits
 ```
 
+## Table of Contents
+
+- [Why This Exists](#why-this-exists)
+- [Quick Start](#quick-start)
+- [Choosing Your Path](#choosing-your-path)
+  - [Small Tasks](#small-tasks-bug-fixes-config-changes-simple-refactors)
+  - [Medium Tasks](#medium-tasks-focused-features-single-concern-changes)
+  - [Large Tasks](#large-tasks-multi-concern-features-major-refactors-greenfield-projects)
+  - [Greenfield or Major Reorganization](#greenfield-or-major-reorganization)
+- [How Each Stage Works](#how-each-stage-works)
+- [The `.thoughts/` Directory](#the-thoughts-directory)
+  - [Sharing with Your Team](#sharing-thoughts-with-your-team)
+- [The `claude-init` Script](#the-claude-init-script)
+- [Tips](#tips)
+- [Using with Other AI Coding Tools](#using-with-other-ai-coding-tools)
+- [Project Structure](#project-structure)
+- [License](#license)
+
 ## Why This Exists
 
 AI coding assistants are powerful but unpredictable when given large tasks. They skip steps, make questionable architectural choices, and produce code that doesn't fit the codebase. This workflow solves that by:
@@ -21,6 +39,7 @@ AI coding assistants are powerful but unpredictable when given large tasks. They
 - **Creating review checkpoints** — You approve each stage before the next one starts. Bad decisions get caught early, not after 500 lines of wrong code.
 - **Building persistent context** — All artifacts live in `.thoughts/`, so you and your team (or the AI) can pick up where you left off across sessions.
 - **Scaling to complexity** — Simple bug fix? Skip straight to Plan → Implement. Complex feature spanning multiple systems? Use the full pipeline with Tickets.
+- **Keeping the context window small** — LLMs produce better output when focused. By breaking work into stages, each conversation stays scoped to one job (research *or* design *or* implementation) rather than cramming everything into a single bloated context. The `.thoughts/` documents carry knowledge between stages, so the AI starts each stage with exactly the context it needs — no more, no less.
 
 ## Quick Start
 
