@@ -67,6 +67,7 @@ AI coding assistants are powerful but unpredictable when given large tasks. They
 | `/create-tickets` | Breaks a design into independently plannable work units | `.thoughts/tickets/prefix-NNN-name.md` |
 | `/create-plan` | Creates phased implementation plan with success criteria | `.thoughts/plans/YYYY-MM-DD-topic.md` |
 | `/implement-plan` | Executes a plan phase-by-phase with verification | Code, tests, and commits |
+| `/commit` | Creates focused git commits with smart grouping | Git commits |
 
 ## Choosing Your Path
 
@@ -274,6 +275,14 @@ The implementation stage:
 If the plan doesn't match reality (codebase drifted since the plan was written), it stops and clearly explains the mismatch rather than silently improvising.
 
 Resumable: if you invoke `/implement-plan` on a partially-completed plan, it picks up from the first unchecked item.
+
+### Bonus: Commit (`/commit`)
+
+**Purpose:** Create clean, focused git commits without thinking about `git add` and message formatting.
+
+`/commit` inspects your working tree (staged, unstaged, and untracked files), groups related changes into logical commits, drafts messages matching your repo's existing commit style, and presents the plan for your approval before executing. It never adds Claude attribution or co-author lines — commits look like you wrote them.
+
+You can use `/commit` standalone anytime, or let `/implement-plan` handle commits at the end of each phase.
 
 ## The `.thoughts/` Directory
 
