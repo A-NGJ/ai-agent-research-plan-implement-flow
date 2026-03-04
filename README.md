@@ -1,6 +1,6 @@
 # AI Agent: Research-Plan-Implement Flow
 
-A structured development workflow for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that turns vague feature requests into shipped code through a pipeline of discrete, reviewable stages.
+A structured development workflow for AI coding agents that turns vague feature requests into shipped code through a pipeline of discrete, reviewable stages. Built for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but the underlying methodology — Research → Design → Plan → Implement — works with any AI coding tool.
 
 Instead of asking an AI to "just implement it" and hoping for the best, this workflow forces deliberate progression through **Research → Design → Plan → Implement** — with optional stages for complex work. Each stage produces a document you can review, edit, and approve before moving on.
 
@@ -367,6 +367,10 @@ The script copies agents, commands, and hooks from your global `~/.claude/` dire
 - **Redirect during research.** When `/create-research` shows initial findings, tell it to focus on specific areas rather than exploring everything.
 - **Skip stages when they don't add value.** The full pipeline exists for complex work. Most daily tasks only need Plan → Implement.
 - **Review the pre-review.** `/implement-plan` shows you exactly what it plans to change before writing code. This is your last checkpoint — use it.
+
+## Using with Other AI Coding Tools
+
+This workflow is built for Claude Code, but the methodology applies to any AI coding agent. The `.thoughts/` directory, document templates, and staged pipeline work regardless of tooling. For other tools, follow their documentation on how to register custom commands and load prompt files, then adapt the files in `.claude/` accordingly.
 
 ## Project Structure
 
