@@ -5,7 +5,14 @@ set -o pipefail
 
 # Configuration
 DOTFILES_CLAUDE="${HOME}/.claude"
-TEMPLATE_DIR="${HOME}/dotfiles/bin/bin/templates"
+SCRIPT_SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$SCRIPT_SOURCE" ]]; do
+    SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+    SCRIPT_SOURCE="$(readlink "$SCRIPT_SOURCE")"
+    [[ "$SCRIPT_SOURCE" != /* ]] && SCRIPT_SOURCE="$SCRIPT_DIR/$SCRIPT_SOURCE"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+TEMPLATE_DIR="${SCRIPT_DIR}/templates"
 
 # Default options
 FORCE=false
