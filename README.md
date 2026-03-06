@@ -22,6 +22,8 @@ research/   designs/   plans/     tests +
   - [Medium Tasks](#medium-tasks-focused-features-single-concern-changes)
   - [Large Tasks](#large-tasks-multi-concern-features-major-refactors-greenfield-projects)
   - [Greenfield or Major Reorganization](#greenfield-or-major-reorganization)
+  - [Not Sure Where to Start?](#not-sure-where-to-start)
+  - [After Implementation](#after-implementation)
 - [How Each Stage Works](#how-each-stage-works)
 - [The `.thoughts/` Directory](#the-thoughts-directory)
   - [Sharing with Your Team](#sharing-thoughts-with-your-team)
@@ -80,6 +82,7 @@ AI coding assistants are powerful but unpredictable when given large tasks. They
 
 | Command | What It Does | Output |
 |---------|-------------|--------|
+| `/rpi-explore` | Investigates opportunities and ideas — opinionated scouting | Conversational (optional save) |
 | `/rpi-research` | Investigates the codebase — pure fact-finding, no opinions | `.thoughts/research/YYYY-MM-DD-topic.md` |
 | `/rpi-design` | Makes architectural decisions with trade-off analysis | `.thoughts/designs/YYYY-MM-DD-topic.md` |
 | `/rpi-structure` | Defines file layout, module boundaries, interfaces | `.thoughts/structures/YYYY-MM-DD-topic.md` |
@@ -87,6 +90,8 @@ AI coding assistants are powerful but unpredictable when given large tasks. They
 | `/rpi-plan` | Creates phased implementation plan with success criteria | `.thoughts/plans/YYYY-MM-DD-topic.md` |
 | `/rpi-implement` | Executes a plan phase-by-phase with verification | Code, tests, and commits |
 | `/rpi-commit` | Creates focused git commits with smart grouping | Git commits |
+| `/rpi-verify` | Validates implementation matches design artifacts | Verification report |
+| `/rpi-archive` | Archives completed artifacts to keep `.thoughts/` clean | Moves files to `.thoughts/archive/` |
 
 ## Choosing Your Path
 
@@ -221,7 +226,32 @@ You:  /rpi-structure .thoughts/designs/2026-03-04-new-service.md
 
 This produces a structure document with every new and modified file, their responsibilities, module boundaries, public interfaces with concrete signatures, and a dependency graph. The structure document then feeds into `/rpi-tickets` or `/rpi-plan`.
 
+### Not Sure Where to Start?
+
+Use `/rpi-explore` when you have a vague idea but aren't ready to commit to a direction. It's opinionated scouting — unlike `/rpi-research` (which maps the terrain neutrally), explore forms assessments and recommends next steps.
+
+```
+You:  /rpi-explore What could we improve about error handling?
+```
+
+Claude investigates broadly, surfaces opportunities, and suggests which pipeline path to take next.
+
+### After Implementation
+
+Two optional commands help close the loop:
+
+- **`/rpi-verify`** — Validates that your implementation matches the design artifacts. Checks completeness, correctness, and coherence. Run it after `/rpi-implement` or anytime you want a second opinion on whether the code matches the plan.
+- **`/rpi-archive`** — Moves completed artifacts to `.thoughts/archive/` to keep the active directory clean. Run it when a feature is fully shipped and you no longer need the research/design/plan documents in the active directories.
+
 ## How Each Stage Works
+
+### Explore (`/rpi-explore`)
+
+**Purpose:** Investigate a topic or vague idea to surface opportunities and recommended next steps — with opinions.
+
+Unlike `/rpi-research` (pure fact-finding), explore is opinionated scouting. It forms assessments, identifies what's worth doing, and suggests which pipeline path to take. Use it when you have a question like "should we migrate to X?" or "what could we improve about Y?" but aren't ready to commit to a direction.
+
+Output is conversational by default. You can optionally save findings to `.thoughts/research/` if they're worth preserving.
 
 ### Research (`/rpi-research`)
 
@@ -303,6 +333,27 @@ Resumable: if you invoke `/rpi-implement` on a partially-completed plan, it pick
 
 You can use `/rpi-commit` standalone anytime, or let `/rpi-implement` handle commits at the end of each phase.
 
+### Verify (`/rpi-verify`)
+
+**Purpose:** Validate that an implementation matches its design artifacts.
+
+Checks three dimensions:
+- **Completeness** — Are all planned changes implemented?
+- **Correctness** — Does the code match the design decisions?
+- **Coherence** — Do the pieces work together as intended?
+
+Can auto-detect what to verify from recent git changes and active plans, or you can point it at a specific design doc, plan, or ticket. Produces a severity-classified report. Purely advisory — it doesn't block anything, and can be re-run after fixes.
+
+### Archive (`/rpi-archive`)
+
+**Purpose:** Move completed artifacts to `.thoughts/archive/` to keep the active directory clean.
+
+Two modes:
+- **Specific paths** — `/rpi-archive .thoughts/research/2026-01-15-auth-flow.md`
+- **Scan mode** — `/rpi-archive` with no arguments scans for completed artifacts
+
+Warns before archiving anything still in `draft` or `active` status. Preserves the full directory structure inside `archive/` (e.g., `archive/research/`, `archive/designs/`).
+
 ## The `.thoughts/` Directory
 
 All pipeline artifacts live in `.thoughts/`, which is **gitignored by default**:
@@ -316,7 +367,8 @@ All pipeline artifacts live in `.thoughts/`, which is **gitignored by default**:
 ├── tickets/             # Scoped work unit tickets + index
 ├── plans/               # Implementation plans with checkboxes
 ├── prs/                 # PR descriptions
-└── reviews/             # Code review reports
+├── reviews/             # Code review and verification reports
+└── archive/             # Completed artifacts (mirrors above structure)
 ```
 
 Files follow the naming convention: `YYYY-MM-DD-descriptive-name.md`
@@ -405,12 +457,15 @@ This workflow is built for Claude Code, but the methodology applies to any AI co
 │   ├── agents/
 │   │   └── codebase-analyzer.md       # Agent: traces code flow and documents implementations
 │   ├── commands/
-│   │   ├── rpi-research.md             # Command: /rpi-research
+│   │   ├── rpi-explore.md             # Command: /rpi-explore
+│   │   ├── rpi-research.md            # Command: /rpi-research
 │   │   ├── rpi-design.md              # Command: /rpi-design
 │   │   ├── rpi-structure.md           # Command: /rpi-structure
 │   │   ├── rpi-tickets.md             # Command: /rpi-tickets
 │   │   ├── rpi-plan.md                # Command: /rpi-plan
 │   │   ├── rpi-implement.md           # Command: /rpi-implement
+│   │   ├── rpi-verify.md              # Command: /rpi-verify
+│   │   ├── rpi-archive.md             # Command: /rpi-archive
 │   │   └── rpi-commit.md              # Command: /rpi-commit
 │   └── skills/
 │       ├── find-patterns/SKILL.md     # Skill: finds existing code patterns to model after
