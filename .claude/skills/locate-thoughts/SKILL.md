@@ -11,6 +11,7 @@ Search the .thoughts/ directory structure to find relevant documents and categor
 
 ```
 .thoughts/
+├── specs/         # Living behavioral specs
 ├── research/      # Research documents
 ├── plans/         # Implementation plans
 ├── designs/       # Design documents
@@ -34,12 +35,16 @@ Search the .thoughts/ directory structure to find relevant documents and categor
 - Plan files: often named `YYYY-MM-DD-feature-name.md`
 - Design files: similar dating convention
 - PR descriptions: often `{number}_description.md`
+- Spec files: organized by domain `domain-name.md`
 - Review reports: often `YYYY-MM-DD-branch-name-code-review-report.md`
 
 ## Output Format
 
 ```
 ## Thought Documents about [Topic]
+
+### Specs
+- `.thoughts/specs/domain-name.md` - Brief description from title
 
 ### Tickets
 - `.thoughts/tickets/eng_1234.md` - Brief description from title
