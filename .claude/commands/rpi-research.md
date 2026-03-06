@@ -169,6 +169,47 @@ last_updated_by: [Researcher name]
 last_updated_note: "Added follow-up research for [brief description]"
 ```
 
+## Step 9: Update specs (optional)
+
+If the research revealed behavioral details about a module or domain, check `.thoughts/specs/` for an existing spec file:
+
+- **If a spec exists** and the research contains new or corrected information, offer to update it
+- **If no spec exists** and the research is comprehensive enough to describe a module's behavior, offer to create one
+
+Ask: "This research documents [module] behavior. Want me to create/update a spec at `.thoughts/specs/[domain].md`?"
+
+**Rules:**
+- Only update specs with confirmed facts from the research — not assumptions or recommendations
+- Never force spec creation — this step is always optional
+- Specs describe current behavior, not planned changes
+- Use the spec file format:
+
+```markdown
+---
+domain: [module/domain name]
+last_updated: YYYY-MM-DD
+updated_by: [path to this research doc]
+---
+
+# [Domain/Module Name]
+
+## Purpose
+[What this module/domain does — 1-2 sentences]
+
+## Behavior
+- [Observable behavior 1]
+- [Observable behavior 2]
+
+## Key Components
+- `file:line` — [what it does]
+
+## Interfaces
+- [Public API, events emitted, data contracts]
+
+## Constraints
+- [Performance, security, compatibility constraints]
+```
+
 ## Guidelines
 
 - Use parallel Task agents to maximize efficiency
