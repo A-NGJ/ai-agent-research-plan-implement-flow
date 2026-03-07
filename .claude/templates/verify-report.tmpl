@@ -1,0 +1,45 @@
+---
+date: {{.Date}}
+topic: "{{.Topic}}"
+tags: [verify{{if .Tags}}, {{.Tags}}{{end}}]
+status: draft
+{{- if .Ticket}}
+ticket: "{{.Ticket}}"
+{{- end}}
+{{- if .Design}}
+design: {{.Design}}
+{{- end}}
+---
+
+# Verification Report: {{.Topic}}
+
+## Summary
+<!-- TODO: Fill in verification summary -->
+
+## Completeness
+<!-- TODO: Plan phases checked, acceptance criteria met, TODOs remaining -->
+
+## Correctness
+<!-- TODO: Implementation matches design, API contracts, edge cases -->
+
+## Coherence
+<!-- TODO: Naming conventions, error handling, existing patterns -->
+
+## Issues
+
+### Blockers
+<!-- TODO: Must fix before merge -->
+
+### Warnings
+<!-- TODO: Should fix -->
+
+### Notes
+<!-- TODO: Consider fixing -->
+
+## References
+{{- if .Ticket}}
+- Ticket: <!-- TODO: path --> — {{.Ticket}}
+{{- end}}
+{{- if .Design}}
+- Design: {{.Design}}
+{{- end}}
