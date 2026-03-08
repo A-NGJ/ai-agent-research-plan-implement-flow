@@ -7,6 +7,8 @@ model: opus
 
 Conduct research across the codebase to answer user questions by spawning parallel sub-agents and synthesizing their findings.
 
+**Prerequisite**: The `rpi` binary must be available in PATH. If not found, run `go build -o bin/rpi ./cmd/rpi` or use `claude-init` to set it up.
+
 ## Facts first, opinions when warranted
 
 This command is the first stage of a pipeline: **research → design → plan → implement**. Its output feeds directly into `/rpi-design`. Your primary job is cartography: map the terrain accurately — describe what exists, where it lives, how components connect, and what patterns are in use.
@@ -29,8 +31,8 @@ This works for both focused questions ("how does auth work?") and open-ended exp
 ## Step 2: Read mentioned files and check for existing research
 
 - If the user mentions specific files (tickets, docs, JSON), read them fully (no limit/offset) before doing anything else. You need this context before you can decompose the research.
-- Check `.thoughts/research/` for existing documents on the same topic. Use Glob and Grep to scan filenames and content.
-  - If relevant research exists, tell the user: "I found existing research on this topic: [path]. Want me to build on it, or start fresh?"
+- Check for existing research on the same topic: run `rpi scan --type research`
+  - If relevant research exists (match by topic), tell the user: "I found existing research on this topic: [path]. Want me to build on it, or start fresh?"
   - If no relevant research exists, continue.
 
 ## Step 3: Assess scope and decompose
@@ -114,72 +116,20 @@ Want me to save these findings to `.thoughts/research/YYYY-MM-DD-description.md`
 
 If the user declines, that's fine — research can be purely conversational. If they agree (or if the research is substantial enough that saving is clearly useful), write the document.
 
-**Filename:** `.thoughts/research/YYYY-MM-DD-description.md`
-- Include ticket number if available: `2025-01-08-ENG-1478-parent-child-tracking.md`
-- Without ticket: `2025-01-08-authentication-flow.md`
+**Create the file**: Run `rpi scaffold research --topic "..." --write`
+This creates `.thoughts/research/YYYY-MM-DD-description.md` with frontmatter pre-populated (date, researcher, git_commit, branch, repository, topic, tags, status).
 
-**Structure:** Use YAML frontmatter for metadata, keep the body focused on content. Only include sections that have actual findings — skip empty sections rather than leaving placeholders.
-
-```markdown
----
-date: [ISO 8601 datetime with timezone]
-researcher: [Author name]
-git_commit: [Current commit hash]
-branch: [Current branch name]
-repository: [Repository name]
-topic: "[User's Question/Topic]"
-tags: [research, codebase, relevant-component-names]
-status: draft
----
-
-# Research: [User's Question/Topic]
-
-## Research Question
-[Original user query]
-
-## Summary
-[High-level answer to the user's question, describing what exists]
-
-## Detailed Findings
-
-### [Component/Area 1]
-- Description of what exists (`file.ext:line`)
-- How it connects to other components
-- Current implementation details
-
-### [Component/Area 2]
-...
-
-## Code References
-- `path/to/file.py:123` - Description of what's there
-- `another/file.ts:45-67` - Description of the code block
-
-## Architecture
-[Current patterns, conventions, and design implementations found]
-
-## Assessment
-<!-- Include when findings reveal clear pain points, opportunities, or trade-offs -->
-- **Pain points**: What's causing friction, complexity, or risk?
-- **Opportunities**: What could be improved, simplified, or added?
-- **Quick wins vs larger efforts**: What's easy to fix vs needs investment?
-- **What's NOT worth doing**: Areas that look problematic but aren't worth the effort
-
-## Suggested Next Steps
-<!-- Include when assessment points to clear actions -->
-- Ready to design [specific approach]? → `/rpi-design`
-- This looks like a small fix — plan it directly? → `/rpi-plan`
-- Need to break this into tickets first? → `/rpi-tickets`
-
-## Web Research Findings
-<!-- Include only if web research was performed -->
-
-## Historical Context
-<!-- Include only if .thoughts/ had relevant documents -->
-- `.thoughts/research/something.md` - Historical decision about X
-
-## Open Questions
-[Any areas that need further investigation]
-```
+**Fill in the document sections** — only include sections that have actual findings, skip empty sections rather than leaving placeholders:
+- Research Question
+- Summary (high-level answer)
+- Detailed Findings (with file:line references)
+- Code References
+- Architecture (patterns, conventions found)
+- Assessment (when findings warrant it — pain points, opportunities, quick wins)
+- Suggested Next Steps (when assessment points to clear actions)
+- Web Research Findings (only if web research was performed)
+- Historical Context (only if .thoughts/ had relevant documents)
+- Open Questions
 
 ## Step 8: Present and follow up
 
@@ -189,10 +139,10 @@ status: draft
 - Ask if they have follow-up questions
 
 **For follow-ups:** Append to the same research document rather than creating a new one. Add a `## Follow-up: [brief description]` section and update the frontmatter:
-```yaml
-last_updated: [YYYY-MM-DD]
-last_updated_by: [Researcher name]
-last_updated_note: "Added follow-up research for [brief description]"
+```
+rpi frontmatter set <file> last_updated "<YYYY-MM-DD>"
+rpi frontmatter set <file> last_updated_by "<Researcher name>"
+rpi frontmatter set <file> last_updated_note "Added follow-up research for [brief description]"
 ```
 
 ## Step 9: Update specs (optional)
@@ -204,37 +154,13 @@ If the research revealed behavioral details about a module or domain, check `.th
 
 Ask: "This research documents [module] behavior. Want me to create/update a spec at `.thoughts/specs/[domain].md`?"
 
+**To create a spec**: Run `rpi scaffold spec --topic "..." --write`
+This creates the spec file with frontmatter pre-populated. Fill in the sections: Purpose, Behavior, Key Components, Interfaces, Constraints.
+
 **Rules:**
 - Only update specs with confirmed facts from the research — not assumptions or recommendations
 - Never force spec creation — this step is always optional
 - Specs describe current behavior, not planned changes
-- Use the spec file format:
-
-```markdown
----
-domain: [module/domain name]
-last_updated: YYYY-MM-DD
-updated_by: [path to this research doc]
----
-
-# [Domain/Module Name]
-
-## Purpose
-[What this module/domain does — 1-2 sentences]
-
-## Behavior
-- [Observable behavior 1]
-- [Observable behavior 2]
-
-## Key Components
-- `file:line` — [what it does]
-
-## Interfaces
-- [Public API, events emitted, data contracts]
-
-## Constraints
-- [Performance, security, compatibility constraints]
-```
 
 ## Guidelines
 

@@ -7,6 +7,8 @@ model: opus
 
 Create implementation plans with phased tasks, success criteria, and verification steps.
 
+**Prerequisite**: The `rpi` binary must be available in PATH. If not found, run `go build -o bin/rpi ./cmd/rpi` or use `claude-init` to set it up.
+
 **Two modes — auto-detected from input:**
 
 - **Standalone mode**: For simple/short tasks. You describe what needs to be done, the plan does its own lightweight research and produces a plan directly. No prior `/rpi-research` or `/rpi-design` needed.
@@ -78,8 +80,15 @@ For tasks that don't need a full research -> design -> structure pipeline. Typic
 After understanding is confirmed (or immediately if the task is unambiguous):
 
 1. **Break the work into phases** (often just 1-2 for simple tasks)
-2. **Write the plan** to `.thoughts/plans/YYYY-MM-DD-description.md`
-3. Use the **Standalone plan template** below
+2. **Create the plan file**: Run `rpi scaffold plan --topic "..." --write`
+   This creates `.thoughts/plans/YYYY-MM-DD-description.md` with frontmatter pre-populated.
+3. **Fill in the plan content**: phases, tasks, code snippets, success criteria, commit steps. Each phase should include:
+   - Overview of what the phase accomplishes
+   - Tasks with file paths and change descriptions (include key code snippets)
+   - Tests in the same phase as the code they test
+   - Success criteria split into automated verification (use actual commands from `CLAUDE.md`) and manual verification
+   - Commit step (stage list + message)
+   - "Pause for manual confirmation" note between phases
 
 ### Step 3: Review & Iterate
 
@@ -98,70 +107,6 @@ When revising based on feedback:
 - **Approach change**: re-research if needed — say so rather than guessing
 - Keep iterating until the user confirms or stops giving feedback
 
-### Standalone Plan Template
-
-````markdown
----
-date: [Current date and time with timezone in ISO format]
-topic: "[Task Name]"
-tags: [plan, relevant-component-names]
-status: draft
----
-
-# [Task Name] Implementation Plan
-
-## Overview
-[1-2 sentence summary of what we're implementing and why]
-
-## Context
-- **Task**: [Original task description or ticket reference]
-- **Scope**: [e.g. "2 files modified", "1 new file + 3 modified", "single function"]
-- **Key files**: [Most important files involved]
-
-## Phase 1: [Descriptive Name]
-
-### Overview
-[What this phase accomplishes]
-
-### Tasks:
-
-#### 1. [Component/File Group]
-**File**: `path/to/file.ext`
-**Changes**: [Summary of what to do]
-
-```[language]
-// Key code to add/modify
-```
-
-#### 2. [Tests]
-**File**: `path/to/test_file.ext`
-**Changes**: [Unit tests, integration tests, and edge cases for everything introduced in this phase]
-
-### Success Criteria:
-
-#### Automated Verification:
-- [ ] Tests pass: `[actual test command from CLAUDE.md]`
-- [ ] Type checking: `[actual typecheck command from CLAUDE.md]`
-- [ ] Linting: `[actual lint command from CLAUDE.md]`
-
-#### Manual Verification:
-- [ ] [Specific thing to verify]
-
-### Commit:
-- [ ] Stage: [files changed in this phase]
-- [ ] Message: `[type]: [what this phase accomplished]`
-
-**Note**: Pause for manual confirmation before proceeding to next phase.
-
----
-
-## Phase 2: [Descriptive Name] (if needed)
-[Same structure as Phase 1]
-
-## References
-- [file:line references to key code]
-````
-
 ---
 
 ## Pipeline Mode
@@ -172,21 +117,16 @@ For complex tasks that already went through the pipeline. Triggered by design do
 
 1. **Read project conventions** — check for `CLAUDE.md` in the project root and note the actual commands for running tests, type checking, and linting. These will be used in success criteria instead of generic placeholders.
 
-2. **Resolve the input document chain.** What you were given determines where to start:
+2. **Resolve the input document chain.**
 
-   **If given a design or structure doc** — standard path:
-   - Read the design doc (primary input)
-   - Read the structure doc (if available)
-   - Read linked research documents
-   - Read referenced ticket files (if any)
+   Run: `rpi chain <input-path>`
 
-   **If given a ticket file** — follow its frontmatter back up the chain:
-   - Read the ticket file first. Extract its frontmatter fields: `ticket:`, `design:`, `structure:`, `depends_on:`
-   - Read the `design:` document — this becomes the primary design context
-   - Read the `structure:` document (if present in frontmatter)
-   - Read research documents linked from the design doc
-   - Read any `depends_on:` tickets to understand prior work and interfaces established by earlier tickets
-   - The ticket's **Scope**, **Design Context**, and **Acceptance Criteria** sections define the boundaries for this plan — the design doc provides broader context, but the ticket scopes what this specific plan covers
+   This recursively follows frontmatter links (ticket → design → research, or design → research) and returns the full artifact chain with metadata. Read all the files it identifies.
+
+   **If given a ticket file** — the ticket's **Scope**, **Design Context**, and **Acceptance Criteria** sections define the boundaries for this plan. The design doc provides broader context, but the ticket scopes what this specific plan covers.
+
+   **If given a design or structure doc** — also check for related tickets:
+   Run: `rpi scan --type ticket --design <path>`
 
    **IMPORTANT**: Read entire files — no limit/offset
    **CRITICAL**: Read these yourself before spawning sub-tasks
@@ -250,104 +190,19 @@ After phase buy-in:
 
 ### Step 4: Write the Plan
 
-**Filename**: `.thoughts/plans/YYYY-MM-DD-<ticket-id>-description.md`
-- Include the ticket ID (e.g., `auth-001`) when one was extracted in Step 1 — whether the input was a ticket file directly or a design doc that references a ticket
-- Without a ticket ID: `2025-01-08-improve-error-handling.md`
-- With a ticket ID: `2025-01-08-auth-001-user-signup.md`
+**Create the plan file**:
+- Without ticket ID: `rpi scaffold plan --topic "..." --write`
+- With ticket ID: `rpi scaffold plan --ticket <id> --design <path> --topic "..." --write`
 
-Use the **Pipeline plan template** below.
+This creates the file at `.thoughts/plans/YYYY-MM-DD-[ticket-id-]description.md` with frontmatter pre-populated.
 
-### Pipeline Plan Template
-
-````markdown
----
-date: [Current date and time with timezone in ISO format]
-topic: "[Feature/Task Name]"
-tags: [plan, relevant-component-names]
-status: draft
-ticket: "[ticket ID if ticket-originated, omit otherwise]"
-design: "[path to design doc]"
----
-
-# [Feature/Task Name] Implementation Plan
-
-## Overview
-[Brief description — reference the design doc for full context]
-**Scope**: [N files modified, M new files — summarised from design/structure doc]
-
-## Source Documents
-- **Ticket**: `[path]` — [ticket ID] (if ticket-originated)
-- **Research**: `[path]` — [1-line summary]
-- **Design**: `[path]` — [key decisions]
-- **Structure**: `[path]` — [scope summary] (if available)
-
-## Phase 1: [Descriptive Name]
-
-### Overview
-[What this phase accomplishes and why it comes first]
-
-### Tasks:
-
-#### 1. [Component/File Group]
-**File**: `path/to/file.ext` (see design doc for interface details)
-**Changes**: [Summary of what to do]
-
-```[language]
-// Key code to add/modify
-```
-
-#### 2. [Tests]
-**File**: `path/to/test_file.ext`
-**Changes**: [Unit tests, integration tests, and edge cases for everything introduced in this phase]
-
-### Success Criteria:
-
-#### Automated Verification:
-- [ ] Tests pass: `[actual test command from CLAUDE.md]`
-- [ ] Type checking: `[actual typecheck command from CLAUDE.md]`
-- [ ] Linting: `[actual lint command from CLAUDE.md]`
-
-#### Manual Verification:
-- [ ] [Specific thing to verify]
-
-### Commit:
-- [ ] Stage: [files changed in this phase]
-- [ ] Message: `[type]: [what this phase accomplished]`
-
-**Note**: Pause for manual confirmation before proceeding to next phase.
-
----
-
-## Phase 2: [Descriptive Name]
-
-### Overview
-[What this phase accomplishes]
-[Dependencies on prior phases]
-
-### Tasks:
-[Same structure as Phase 1 — including tests for this phase's changes]
-
-### Success Criteria:
-[Same structure as Phase 1]
-
-### Commit:
-- [ ] Stage: [files changed in this phase]
-- [ ] Message: `[type]: [what this phase accomplished]`
-
-**Note**: Pause for manual confirmation before proceeding to next phase.
-
----
-
-## Migration Notes (if applicable)
-[Ordering concerns, backward compatibility, rollback strategy]
-
-## References
-- Ticket: `[path to ticket]` — [ticket ID] (if ticket-originated)
-- Research: `[path to research doc]`
-- Design: `[path to design doc]`
-- Structure: `[path to structure doc]` (if available)
-- Similar implementation: `[file:line]`
-````
+**Fill in the plan content**: source documents section, phases (tasks, code snippets, success criteria, commit steps), migration notes if applicable, and references. Each phase should include:
+- Overview (what it accomplishes and why it comes first / dependencies on prior phases)
+- Tasks with file paths and change descriptions (include key code snippets, reference design doc for interface details)
+- Tests in the same phase as the code they test
+- Success criteria split into automated and manual verification
+- Commit step (stage list + message)
+- "Pause for manual confirmation" note between phases
 
 ### Step 5: Review & Iterate
 

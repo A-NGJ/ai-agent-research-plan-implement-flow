@@ -11,6 +11,8 @@ This is part of the pipeline: **research → design → plan → implement**. Fo
 
 Design is where you make the hard choices — choosing between approaches, identifying risks, and ensuring decisions compose well together. A good design document captures *why* choices were made (not just what was chosen), so future readers can evaluate whether the reasoning still holds when circumstances change.
 
+**Prerequisite**: The `rpi` binary must be available in PATH. If not found, run `go build -o bin/rpi ./cmd/rpi` or use `claude-init` to set it up.
+
 ## Initial Response
 
 **Auto-detect the mode from what's provided:**
@@ -74,41 +76,13 @@ Present options with concrete trade-offs:
 
 ### Step 3: Document the Decision
 
-After the user confirms direction, write a lightweight design doc to `.thoughts/designs/YYYY-MM-DD-description.md`:
+After the user confirms direction, create the design doc:
 
-```markdown
----
-date: [ISO 8601 datetime with timezone]
-topic: "[Decision Topic]"
-tags: [design, relevant-component-names]
-status: complete
----
+Run: `rpi scaffold design --topic "..." --write`
 
-# Design: [Decision Topic]
+This creates `.thoughts/designs/YYYY-MM-DD-description.md` with frontmatter pre-populated (`date`, `topic`, `tags`, `status: complete`).
 
-## Decision
-[What was decided, 1-2 sentences]
-
-## Context
-[Why this decision was needed — the problem or requirement]
-
-## Options Considered
-
-### [Option A]
-[Brief description, key pros/cons]
-
-### [Option B]
-[Brief description, key pros/cons]
-
-## Rationale
-[Why the chosen option wins — tied to specific constraints, codebase patterns, or requirements]
-
-## Consequences
-[What this decision enables, prevents, or requires in follow-up work]
-
-## References
-- [file:line references to relevant code]
-```
+Fill in the sections: Decision, Context, Options Considered, Rationale, Consequences, References.
 
 Then proceed to the next pipeline stage or ask if the user wants to continue.
 
@@ -123,13 +97,18 @@ For features that involve multiple interacting decisions, new components, or sig
 Build a thorough understanding of the terrain before proposing solutions. Rushing to solutions without understanding the landscape leads to designs that fight the codebase instead of working with it.
 
 1. **Read all mentioned files fully** (no limit/offset) before spawning sub-tasks
-2. **Spawn parallel research sub-tasks** using the Task tool. Each sub-task should load the appropriate skill first, then perform its work:
+2. **Resolve the artifact chain** if a research doc or ticket was provided:
+   Run: `rpi chain <input-path>`
+   Read all files it identifies.
+3. **Check for existing designs** on the same topic:
+   Run: `rpi scan --type design`
+4. **Spawn parallel research sub-tasks** using the Task tool. Each sub-task should load the appropriate skill first, then perform its work:
    - Sub-task: "Load the `locate-codebase` skill, then find components related to [task description]"
    - Sub-task (@codebase-analyzer): Understand current architecture and patterns in use
    - Sub-task: "Load the `locate-thoughts` skill, then find existing research, designs, and plans about [topic]"
    - Sub-task: "Load the `find-patterns` skill, then find how similar problems were solved in the codebase for [topic]"
-3. **Read all files identified by research tasks**
-4. **Probe for non-functional requirements** — these are commonly overlooked and cause expensive rework later. Consider which of these matter for this design:
+5. **Read all files identified by research tasks**
+6. **Probe for non-functional requirements** — these are commonly overlooked and cause expensive rework later. Consider which of these matter for this design:
    - Performance (latency, throughput, resource usage)
    - Reliability (error handling, retry behavior, graceful degradation)
    - Security (auth, data sensitivity, injection surfaces)
@@ -137,7 +116,7 @@ Build a thorough understanding of the terrain before proposing solutions. Rushin
    - Scalability (data growth, user growth, concurrency)
 
    Don't force-fit all of these — just surface the ones genuinely relevant to the feature.
-5. **Present current understanding:**
+7. **Present current understanding:**
    ```
    Based on the research and analysis:
 
@@ -243,99 +222,23 @@ After the user selects directions:
 
 ### Step 4: Write the Design Document
 
-Save to `.thoughts/designs/YYYY-MM-DD-description.md`
-- With ticket: `2025-01-08-<ticket-id>-feature-name.md`
-- Without ticket: `2025-01-08-improve-error-handling.md`
+**Create the design doc**:
+- Without ticket: `rpi scaffold design --topic "..." --research <path> --write`
+- With ticket: `rpi scaffold design --topic "..." --research <path> --write`
+  (rename the file to include ticket ID: `YYYY-MM-DD-<ticket-id>-feature-name.md`)
 
-**Template:**
+This creates `.thoughts/designs/YYYY-MM-DD-description.md` with frontmatter pre-populated (`date`, `topic`, `tags`, `status: draft`, `related_research`).
 
-````markdown
----
-date: [Current date and time with timezone in ISO format]
-topic: "[Feature/Task Name]"
-tags: [design, architecture, relevant-component-names]
-status: draft
-related_research: [path to research doc if available]
----
-
-# Design: [Feature/Task Name]
-
-## Overview
-[Brief description of what we're designing and the problem it solves]
-
-## Context
-- **Research**: [Link to research document if available]
-- **Ticket**: [Link to ticket if available]
-- **Current State**: [Brief description of the current system]
-
-## Constraints & Requirements
-- [Hard constraint from the system or business]
-- [Non-functional requirement: performance, security, etc.]
-- [Compatibility requirement]
-
-## Design Decisions
-
-### Decision 1: [Decision Title]
-**Chosen**: [Option name]
-**Alternatives considered**: [Other options briefly]
-**Rationale**: [Why this option was chosen, tied to specific constraints]
-**Evidence**: [File references, benchmarks, or patterns that support this]
-
-### Decision 2: [Decision Title]
-[Same structure...]
-
-## Architecture
-
-### Component Overview
-[Description of the main components and their responsibilities]
-
-### Data Flow
-[How data moves through the system — use diagrams for clarity]
-
-```
-[Input] --> [Component A] --> [Component B] --> [Output]
-                 |                   ^
-                 v                   |
-            [Storage] ----------> [Cache]
-```
-
-### Integration Points
-[Where this design touches existing systems, with file:line references]
-
-### API Contracts (if applicable)
-[Key interfaces, function signatures, or API shapes that other components depend on]
-
-## File Structure (if applicable)
-<!-- Include this section when the design introduces new files/modules or reorganizes existing ones.
-     For large-scale reorganizations or greenfield projects with many new files, consider using
-     /rpi-structure for a dedicated deep-dive instead. -->
-
-### New Files
-- `path/to/new-file.ext` — [responsibility, key exports]
-
-### Modified Files
-- `path/to/existing-file.ext` — [what changes and why]
-
-### Module Boundaries
-- [Module A] depends on [Module B] via [interface]
-- [No circular dependencies]
-
-## Risks & Mitigations
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| [Risk description] | High/Med/Low | High/Med/Low | [Strategy] |
-
-## What This Design Does NOT Cover
-[Explicit out-of-scope items to prevent scope creep]
-
-## Open Questions
-[Any remaining questions — resolve all before marking status as complete]
-
-## References
-- Research: `[path to research doc]`
-- Similar implementation: `[file:line]`
-- External reference: [link if applicable]
-````
+**Fill in the design sections:**
+- Overview, Context (research link, ticket link, current state)
+- Constraints & Requirements
+- Design Decisions (chosen option, alternatives, rationale, evidence for each)
+- Architecture (component overview, data flow with diagrams, integration points with file:line refs, API contracts)
+- File Structure (new files, modified files, module boundaries — if applicable)
+- Risks & Mitigations (table with impact/likelihood/strategy)
+- What This Design Does NOT Cover
+- Open Questions (resolve all before marking complete)
+- References
 
 ### Step 5: Review & Iterate
 
@@ -356,10 +259,10 @@ When the user provides a path to an existing design doc that needs updating:
 4. **Research if needed** — spawn targeted sub-tasks only for the areas that changed
 5. **Propose changes** — present what you'd update and why, get buy-in before modifying
 6. **Update the document** — modify in place, update the frontmatter:
-   ```yaml
-   status: updated
-   last_updated: [YYYY-MM-DD]
-   update_reason: "[Brief description of what changed]"
+   ```
+   rpi frontmatter set <design> status updated
+   rpi frontmatter set <design> last_updated "<YYYY-MM-DD>"
+   rpi frontmatter set <design> update_reason "<Brief description of what changed>"
    ```
 7. Add an `## Update Log` section at the bottom if one doesn't exist, with a dated entry explaining what changed and why
 
@@ -384,7 +287,7 @@ If the design changes existing behavior (not just adding new code), check `.thou
 
 **Rules:**
 - Don't update specs to reflect the design — specs describe current behavior, not planned behavior
-- Instead, add a note in the spec's frontmatter: `pending_changes: [path to this design doc]`
+- Instead, flag the spec: `rpi frontmatter set <spec-path> pending_changes "<design-path>"`
 - Only flag specs when the design genuinely alters documented behavior
 - This step is always optional
 
