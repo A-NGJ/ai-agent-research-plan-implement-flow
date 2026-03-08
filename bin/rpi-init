@@ -34,10 +34,10 @@ NC='\033[0m' # No Color
 
 show_help() {
     cat << 'EOF'
-claude-init - Initialize Claude Code configuration for a project
+rpi-init - Initialize Claude Code configuration for a project
 
 USAGE:
-    claude-init [OPTIONS] [TARGET_DIR]
+    rpi-init [OPTIONS] [TARGET_DIR]
 
 OPTIONS:
     -h, --help          Show this help message
@@ -55,19 +55,19 @@ ARGUMENTS:
 
 EXAMPLES:
     # Initialize current directory (creates .claude/ + CLAUDE.md)
-    claude-init
+    rpi-init
 
     # Initialize with all configs from dotfiles
-    claude-init --all
+    rpi-init --all
 
     # Initialize specific directory
-    claude-init ~/projects/my-app
+    rpi-init ~/projects/my-app
 
     # Initialize with all configs in specific directory
-    claude-init --all ~/projects/my-app
+    rpi-init --all ~/projects/my-app
 
     # Update existing configs from dotfiles
-    claude-init --update
+    rpi-init --update
 
 NOTES:
     - Source configs are read from: ~/{DOTFILES_CLAUDE}/ (default: ~/.claude/)
@@ -482,7 +482,7 @@ main() {
         if grep -q '\.local/bin' "$PROFILE_FILE" 2>/dev/null; then
             log_info "   ~/.local/bin already referenced in ${PROFILE_FILE}"
         else
-            printf '\n# Added by claude-init — RPI workflow binary\nexport PATH="${HOME}/.local/bin:${PATH}"\n' >> "$PROFILE_FILE"
+            printf '\n# Added by rpi-init — RPI workflow binary\nexport PATH="${HOME}/.local/bin:${PATH}"\n' >> "$PROFILE_FILE"
             log_success "   Added ~/.local/bin to PATH in ${PROFILE_FILE}"
             log_info "   Run: source ${PROFILE_FILE}"
         fi
