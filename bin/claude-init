@@ -407,6 +407,17 @@ main() {
             generate_pipeline_md "$TARGET_DIR"
         fi
 
+        # Rebuild and reinstall RPI binary
+        if [[ ! -f "${SCRIPT_DIR}/rpi" ]] && command -v go &>/dev/null; then
+            REPO_DIR="$(dirname "${SCRIPT_DIR}")"
+            (cd "$REPO_DIR" && go build -o bin/rpi ./cmd/rpi)
+        fi
+        if [[ -f "${SCRIPT_DIR}/rpi" ]]; then
+            mkdir -p "${HOME}/.local/bin"
+            cp "${SCRIPT_DIR}/rpi" "${HOME}/.local/bin/rpi"
+            log_success "   Updated rpi in ~/.local/bin"
+        fi
+
         log_success "Update complete!"
         exit 0
     fi
@@ -428,13 +439,53 @@ main() {
     mkdir -p "${TARGET_DIR}/.thoughts/tickets"
     log_success "   Created .claude/{agents,commands,skills,hooks}/ and .thoughts/"
 
-    # Copy RPI binary
+    # Build RPI binary if not present
+    if [[ ! -f "${SCRIPT_DIR}/rpi" ]]; then
+        log_info "RPI binary not found, attempting to build..."
+        REPO_DIR="$(dirname "${SCRIPT_DIR}")"
+        if command -v go &>/dev/null; then
+            (cd "$REPO_DIR" && go build -o bin/rpi ./cmd/rpi)
+            if [[ -f "${SCRIPT_DIR}/rpi" ]]; then
+                log_success "   Built bin/rpi"
+            else
+                log_error "   Build failed — check Go installation"
+            fi
+        else
+            log_warning "   Go not installed — cannot build bin/rpi"
+        fi
+    fi
+
+    # Install RPI binary to ~/.local/bin
     if [[ -f "${SCRIPT_DIR}/rpi" ]]; then
-        mkdir -p "${TARGET_DIR}/bin"
-        cp "${SCRIPT_DIR}/rpi" "${TARGET_DIR}/bin/rpi"
-        log_success "   Copied bin/rpi"
+        mkdir -p "${HOME}/.local/bin"
+        cp "${SCRIPT_DIR}/rpi" "${HOME}/.local/bin/rpi"
+        log_success "   Installed rpi to ~/.local/bin/rpi"
     else
-        log_warning "   Pre-built bin/rpi not found at ${SCRIPT_DIR}/rpi"
+        log_warning "   RPI binary not available — skipping install"
+    fi
+
+    # Ensure ~/.local/bin is in PATH
+    if [[ ":${PATH}:" != *":${HOME}/.local/bin:"* ]]; then
+        SHELL_NAME="$(basename "$SHELL")"
+        case "$SHELL_NAME" in
+            zsh)  PROFILE_FILE="${HOME}/.zshrc" ;;
+            bash)
+                if [[ -f "${HOME}/.bash_profile" ]]; then
+                    PROFILE_FILE="${HOME}/.bash_profile"
+                else
+                    PROFILE_FILE="${HOME}/.bashrc"
+                fi
+                ;;
+            *)    PROFILE_FILE="${HOME}/.profile" ;;
+        esac
+
+        if grep -q '\.local/bin' "$PROFILE_FILE" 2>/dev/null; then
+            log_info "   ~/.local/bin already referenced in ${PROFILE_FILE}"
+        else
+            printf '\n# Added by claude-init — RPI workflow binary\nexport PATH="${HOME}/.local/bin:${PATH}"\n' >> "$PROFILE_FILE"
+            log_success "   Added ~/.local/bin to PATH in ${PROFILE_FILE}"
+            log_info "   Run: source ${PROFILE_FILE}"
+        fi
     fi
 
     # Generate CLAUDE.md
