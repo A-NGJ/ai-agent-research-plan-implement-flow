@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/A-NGJ/ai-agent-research-plan-implement-flow/internal/frontmatter"
 	"github.com/A-NGJ/ai-agent-research-plan-implement-flow/internal/scanner"
 	"github.com/spf13/cobra"
 )
@@ -31,6 +33,24 @@ var archiveCheckRefsCmd = &cobra.Command{
 	RunE:  runArchiveCheckRefs,
 }
 
+var archiveMoveCmd = &cobra.Command{
+	Use:   "move <path>",
+	Short: "Archive an artifact: update frontmatter and move to archive/",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runArchiveMove,
+}
+
+var archiveMoveForce bool
+
+type archiveMoveResult struct {
+	From               string `json:"from"`
+	To                 string `json:"to"`
+	FrontmatterUpdated bool   `json:"frontmatter_updated"`
+}
+
+// errHasReferences is returned when a file has references and --force is not set.
+var errHasReferences = fmt.Errorf("file has active references")
+
 type archiveScanResult struct {
 	Path     string  `json:"path"`
 	Type     string  `json:"type"`
@@ -40,8 +60,10 @@ type archiveScanResult struct {
 }
 
 func init() {
+	archiveMoveCmd.Flags().BoolVar(&archiveMoveForce, "force", false, "Skip ref check warning")
 	archiveCmd.AddCommand(archiveScanCmd)
 	archiveCmd.AddCommand(archiveCheckRefsCmd)
+	archiveCmd.AddCommand(archiveMoveCmd)
 	rootCmd.AddCommand(archiveCmd)
 }
 
@@ -92,4 +114,66 @@ func runArchiveCheckRefs(cmd *cobra.Command, args []string) error {
 	data, _ := json.MarshalIndent(refs, "", "  ")
 	fmt.Fprintln(cmd.OutOrStdout(), string(data))
 	return nil
+}
+
+func runArchiveMove(cmd *cobra.Command, args []string) error {
+	result, err := doArchiveMove(args[0], thoughtsDirFlag, archiveMoveForce, time.Now())
+	if err == errHasReferences {
+		fmt.Fprintln(os.Stderr, "error: file has active references (use --force to override)")
+		os.Exit(3)
+	}
+	if err != nil {
+		return err
+	}
+
+	data, _ := json.MarshalIndent(result, "", "  ")
+	fmt.Fprintln(cmd.OutOrStdout(), string(data))
+	return nil
+}
+
+func doArchiveMove(targetPath, thoughtsDir string, force bool, now time.Time) (*archiveMoveResult, error) {
+	doc, err := frontmatter.Parse(targetPath)
+	if err != nil {
+		return nil, fmt.Errorf("parse %s: %w", targetPath, err)
+	}
+
+	// Check references
+	refPath := targetPath
+	if rel, relErr := filepath.Rel(thoughtsDir, targetPath); relErr == nil {
+		refPath = rel
+	}
+	refCount, err := scanner.CountReferences(thoughtsDir, refPath)
+	if err != nil {
+		return nil, fmt.Errorf("count references: %w", err)
+	}
+	if refCount > 0 && !force {
+		return nil, errHasReferences
+	}
+
+	// Update frontmatter
+	doc.Frontmatter["status"] = "archived"
+	doc.Frontmatter["archived_date"] = now.Format("2006-01-02")
+	if err := frontmatter.Write(doc); err != nil {
+		return nil, fmt.Errorf("write frontmatter: %w", err)
+	}
+
+	// Compute destination
+	artifactType := scanner.InferType(targetPath)
+	yearMonth := now.Format("2006-01")
+	filename := filepath.Base(targetPath)
+	destDir := filepath.Join(thoughtsDir, "archive", yearMonth, artifactType)
+	destPath := filepath.Join(destDir, filename)
+
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		return nil, fmt.Errorf("create archive dir: %w", err)
+	}
+	if err := os.Rename(targetPath, destPath); err != nil {
+		return nil, fmt.Errorf("move file: %w", err)
+	}
+
+	return &archiveMoveResult{
+		From:               targetPath,
+		To:                 destPath,
+		FrontmatterUpdated: true,
+	}, nil
 }

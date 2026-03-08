@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
+	"github.com/A-NGJ/ai-agent-research-plan-implement-flow/internal/frontmatter"
 	"github.com/A-NGJ/ai-agent-research-plan-implement-flow/internal/scanner"
 )
 
@@ -117,5 +120,112 @@ func TestArchiveCheckRefsEmpty(t *testing.T) {
 
 	if len(refs) != 0 {
 		t.Errorf("expected 0 refs, got %d", len(refs))
+	}
+}
+
+func TestArchiveMoveUpdatesFrontmatter(t *testing.T) {
+	dir := setupArchiveTestDir(t)
+	now := time.Date(2026, 3, 8, 0, 0, 0, 0, time.UTC)
+	targetPath := filepath.Join(dir, "plans/p1.md")
+
+	result, err := doArchiveMove(targetPath, dir, true, now)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Read the moved file and check frontmatter
+	doc, err := frontmatter.Parse(result.To)
+	if err != nil {
+		t.Fatalf("parse moved file: %v", err)
+	}
+	if doc.Frontmatter["status"] != "archived" {
+		t.Errorf("expected status 'archived', got %v", doc.Frontmatter["status"])
+	}
+	if doc.Frontmatter["archived_date"] != "2026-03-08" {
+		t.Errorf("expected archived_date '2026-03-08', got %v", doc.Frontmatter["archived_date"])
+	}
+	if !result.FrontmatterUpdated {
+		t.Error("expected frontmatter_updated to be true")
+	}
+}
+
+func TestArchiveMoveCorrectPath(t *testing.T) {
+	dir := setupArchiveTestDir(t)
+	now := time.Date(2026, 3, 8, 0, 0, 0, 0, time.UTC)
+	targetPath := filepath.Join(dir, "plans/p1.md")
+
+	result, err := doArchiveMove(targetPath, dir, true, now)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expectedDest := filepath.Join(dir, "archive", "2026-03", "plan", "p1.md")
+	if result.To != expectedDest {
+		t.Errorf("expected dest %s, got %s", expectedDest, result.To)
+	}
+	if result.From != targetPath {
+		t.Errorf("expected from %s, got %s", targetPath, result.From)
+	}
+}
+
+func TestArchiveMoveFileAtDestination(t *testing.T) {
+	dir := setupArchiveTestDir(t)
+	now := time.Date(2026, 3, 8, 0, 0, 0, 0, time.UTC)
+	targetPath := filepath.Join(dir, "plans/p1.md")
+
+	result, err := doArchiveMove(targetPath, dir, true, now)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Original should not exist
+	if _, err := os.Stat(targetPath); !os.IsNotExist(err) {
+		t.Error("original file should not exist after move")
+	}
+	// Destination should exist
+	if _, err := os.Stat(result.To); err != nil {
+		t.Errorf("destination file should exist: %v", err)
+	}
+}
+
+func TestArchiveMoveRefsWithoutForce(t *testing.T) {
+	dir := setupArchiveTestDir(t)
+	now := time.Date(2026, 3, 8, 0, 0, 0, 0, time.UTC)
+	// p1.md is referenced by r1.md in body
+	targetPath := filepath.Join(dir, "plans/p1.md")
+
+	_, err := doArchiveMove(targetPath, dir, false, now)
+	if err != errHasReferences {
+		t.Errorf("expected errHasReferences, got %v", err)
+	}
+
+	// File should still be in original location
+	if _, statErr := os.Stat(targetPath); statErr != nil {
+		t.Error("file should still exist when move is blocked")
+	}
+}
+
+func TestArchiveMoveRefsWithForce(t *testing.T) {
+	dir := setupArchiveTestDir(t)
+	now := time.Date(2026, 3, 8, 0, 0, 0, 0, time.UTC)
+	targetPath := filepath.Join(dir, "plans/p1.md")
+
+	result, err := doArchiveMove(targetPath, dir, true, now)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(result.To, "archive") {
+		t.Errorf("expected archive path, got %s", result.To)
+	}
+}
+
+func TestArchiveMoveNonexistent(t *testing.T) {
+	dir := setupArchiveTestDir(t)
+	now := time.Date(2026, 3, 8, 0, 0, 0, 0, time.UTC)
+
+	_, err := doArchiveMove(filepath.Join(dir, "nonexistent.md"), dir, false, now)
+	if err == nil {
+		t.Error("expected error for nonexistent file")
 	}
 }

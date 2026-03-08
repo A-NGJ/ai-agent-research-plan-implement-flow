@@ -72,7 +72,7 @@ func Scan(thoughtsDir string, filters Filters) ([]ArtifactInfo, error) {
 func buildInfo(doc *frontmatter.Document, path string) ArtifactInfo {
 	a := ArtifactInfo{
 		Path: path,
-		Type: inferType(path),
+		Type: InferType(path),
 	}
 
 	if s, ok := getStr(doc.Frontmatter, "status"); ok {
@@ -232,7 +232,8 @@ func CountReferences(thoughtsDir, targetPath string) (int, error) {
 	return len(refs), err
 }
 
-func inferType(path string) string {
+// InferType determines the artifact type from the file path.
+func InferType(path string) string {
 	parts := strings.Split(filepath.ToSlash(path), "/")
 	for _, p := range parts {
 		switch p {
