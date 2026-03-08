@@ -428,6 +428,15 @@ main() {
     mkdir -p "${TARGET_DIR}/.thoughts/tickets"
     log_success "   Created .claude/{agents,commands,skills,hooks}/ and .thoughts/"
 
+    # Copy RPI binary
+    if [[ -f "${SCRIPT_DIR}/rpi" ]]; then
+        mkdir -p "${TARGET_DIR}/bin"
+        cp "${SCRIPT_DIR}/rpi" "${TARGET_DIR}/bin/rpi"
+        log_success "   Copied bin/rpi"
+    else
+        log_warning "   Pre-built bin/rpi not found at ${SCRIPT_DIR}/rpi"
+    fi
+
     # Generate CLAUDE.md
     if [[ "$NO_CLAUDE_MD" != true ]]; then
         log_info "Creating CLAUDE.md..."
