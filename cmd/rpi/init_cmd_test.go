@@ -12,6 +12,11 @@ func resetInitFlags() {
 	initForce = false
 	initNoClaudeMD = false
 	initTrackThoughts = false
+	initAll = false
+	initUpdate = false
+	initAgentsOnly = false
+	initCommandsOnly = false
+	initSkillsOnly = false
 }
 
 func runInitInDir(t *testing.T, dir string) (*bytes.Buffer, error) {
@@ -335,5 +340,485 @@ func TestInitTemplateContent(t *testing.T) {
 	}
 	if !strings.Contains(string(pipelineData), "# Development Pipeline") {
 		t.Error("PIPELINE.md missing expected template header")
+	}
+}
+
+// setupDotfiles creates a fake dotfiles directory with test files.
+func setupDotfiles(t *testing.T) string {
+	t.Helper()
+	dotfiles := t.TempDir()
+	for _, dir := range []string{"agents", "commands", "skills", "hooks"} {
+		os.MkdirAll(filepath.Join(dotfiles, dir), 0755)
+		os.WriteFile(filepath.Join(dotfiles, dir, "test.md"), []byte(dir+" content"), 0644)
+	}
+	// Add a subdirectory in agents to test recursive copy
+	os.MkdirAll(filepath.Join(dotfiles, "agents", "subdir"), 0755)
+	os.WriteFile(filepath.Join(dotfiles, "agents", "subdir", "nested.md"), []byte("nested"), 0644)
+	return dotfiles
+}
+
+func TestInitAll(t *testing.T) {
+	dotfiles := setupDotfiles(t)
+	t.Setenv("DOTFILES_CLAUDE", dotfiles)
+
+	dir := t.TempDir()
+	resetInitFlags()
+	initAll = true
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify all components copied
+	for _, comp := range []string{"agents", "commands", "skills", "hooks"} {
+		path := filepath.Join(dir, ".claude", comp, "test.md")
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Errorf("%s/test.md not copied: %v", comp, err)
+			continue
+		}
+		if string(data) != comp+" content" {
+			t.Errorf("%s/test.md has wrong content: %s", comp, data)
+		}
+	}
+
+	// Verify recursive copy
+	nested := filepath.Join(dir, ".claude", "agents", "subdir", "nested.md")
+	data, err := os.ReadFile(nested)
+	if err != nil {
+		t.Fatalf("nested file not copied: %v", err)
+	}
+	if string(data) != "nested" {
+		t.Errorf("nested file has wrong content: %s", data)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "Copied") {
+		t.Error("output missing copy confirmation")
+	}
+}
+
+func TestInitAllAgentsOnly(t *testing.T) {
+	dotfiles := setupDotfiles(t)
+	t.Setenv("DOTFILES_CLAUDE", dotfiles)
+
+	dir := t.TempDir()
+	resetInitFlags()
+	initAll = true
+	initAgentsOnly = true
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// agents should be copied
+	if _, err := os.Stat(filepath.Join(dir, ".claude", "agents", "test.md")); err != nil {
+		t.Error("agents/test.md should be copied")
+	}
+
+	// commands, skills, hooks should NOT have test.md from dotfiles
+	for _, comp := range []string{"commands", "skills", "hooks"} {
+		path := filepath.Join(dir, ".claude", comp, "test.md")
+		if _, err := os.Stat(path); err == nil {
+			t.Errorf("%s/test.md should not be copied with --agents-only", comp)
+		}
+	}
+}
+
+func TestInitAllCommandsOnly(t *testing.T) {
+	dotfiles := setupDotfiles(t)
+	t.Setenv("DOTFILES_CLAUDE", dotfiles)
+
+	dir := t.TempDir()
+	resetInitFlags()
+	initAll = true
+	initCommandsOnly = true
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, ".claude", "commands", "test.md")); err != nil {
+		t.Error("commands/test.md should be copied")
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".claude", "agents", "test.md")); err == nil {
+		t.Error("agents/test.md should not be copied with --commands-only")
+	}
+}
+
+func TestInitAllSkillsOnly(t *testing.T) {
+	dotfiles := setupDotfiles(t)
+	t.Setenv("DOTFILES_CLAUDE", dotfiles)
+
+	dir := t.TempDir()
+	resetInitFlags()
+	initAll = true
+	initSkillsOnly = true
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, ".claude", "skills", "test.md")); err != nil {
+		t.Error("skills/test.md should be copied")
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".claude", "agents", "test.md")); err == nil {
+		t.Error("agents/test.md should not be copied with --skills-only")
+	}
+}
+
+func TestInitAllDotfilesEnv(t *testing.T) {
+	dotfiles := setupDotfiles(t)
+	t.Setenv("DOTFILES_CLAUDE", dotfiles)
+
+	dir := t.TempDir()
+	resetInitFlags()
+	initAll = true
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify it used the env var path (files exist)
+	if _, err := os.Stat(filepath.Join(dir, ".claude", "agents", "test.md")); err != nil {
+		t.Error("DOTFILES_CLAUDE env var not respected")
+	}
+}
+
+func TestInitAllMissingSource(t *testing.T) {
+	t.Setenv("DOTFILES_CLAUDE", "/nonexistent/path")
+
+	dir := t.TempDir()
+	resetInitFlags()
+	initAll = true
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err == nil {
+		t.Fatal("expected error for missing dotfiles source")
+	}
+	if !strings.Contains(err.Error(), "dotfiles source not found") {
+		t.Errorf("expected 'dotfiles source not found' error, got: %v", err)
+	}
+}
+
+func TestCopyDirectory(t *testing.T) {
+	src := t.TempDir()
+	dest := filepath.Join(t.TempDir(), "dest")
+
+	// Create test files
+	os.WriteFile(filepath.Join(src, "a.txt"), []byte("aaa"), 0644)
+	os.WriteFile(filepath.Join(src, "b.txt"), []byte("bbb"), 0644)
+	os.MkdirAll(filepath.Join(src, "sub"), 0755)
+	os.WriteFile(filepath.Join(src, "sub", "c.txt"), []byte("ccc"), 0644)
+
+	count, err := copyDirectory(src, dest)
+	if err != nil {
+		t.Fatalf("copyDirectory error: %v", err)
+	}
+	if count != 3 { // a.txt, b.txt, sub/
+		t.Errorf("expected 3 items copied, got %d", count)
+	}
+
+	// Verify content
+	data, _ := os.ReadFile(filepath.Join(dest, "a.txt"))
+	if string(data) != "aaa" {
+		t.Errorf("a.txt content: got %q, want %q", data, "aaa")
+	}
+	data, _ = os.ReadFile(filepath.Join(dest, "sub", "c.txt"))
+	if string(data) != "ccc" {
+		t.Errorf("sub/c.txt content: got %q, want %q", data, "ccc")
+	}
+}
+
+// initAndSetupForUpdate initializes a project with --all, then returns the dir
+// for subsequent --update tests.
+func initAndSetupForUpdate(t *testing.T, dotfiles string) string {
+	t.Helper()
+	dir := t.TempDir()
+	t.Setenv("DOTFILES_CLAUDE", dotfiles)
+
+	resetInitFlags()
+	initAll = true
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	if err := cmd.RunE(cmd, []string{dir}); err != nil {
+		t.Fatalf("init --all failed: %v", err)
+	}
+	return dir
+}
+
+func TestInitUpdate(t *testing.T) {
+	dotfiles := setupDotfiles(t)
+	dir := initAndSetupForUpdate(t, dotfiles)
+
+	// Add a new file to dotfiles
+	os.WriteFile(filepath.Join(dotfiles, "agents", "new-agent.md"), []byte("new agent"), 0644)
+
+	resetInitFlags()
+	initUpdate = true
+	t.Setenv("DOTFILES_CLAUDE", dotfiles)
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err != nil {
+		t.Fatalf("--update error: %v", err)
+	}
+
+	// New file should be copied
+	data, err := os.ReadFile(filepath.Join(dir, ".claude", "agents", "new-agent.md"))
+	if err != nil {
+		t.Fatal("new-agent.md not copied during update")
+	}
+	if string(data) != "new agent" {
+		t.Errorf("new-agent.md wrong content: %s", data)
+	}
+
+	// Existing unchanged file should still be there
+	if _, err := os.Stat(filepath.Join(dir, ".claude", "agents", "test.md")); err != nil {
+		t.Error("existing test.md should still exist")
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "agents:") {
+		t.Error("output should contain update stats for agents")
+	}
+}
+
+func TestInitUpdateDiffers(t *testing.T) {
+	dotfiles := setupDotfiles(t)
+	dir := initAndSetupForUpdate(t, dotfiles)
+
+	// Modify local file to differ from dotfiles
+	os.WriteFile(filepath.Join(dir, ".claude", "agents", "test.md"), []byte("local changes"), 0644)
+
+	resetInitFlags()
+	initUpdate = true
+	t.Setenv("DOTFILES_CLAUDE", dotfiles)
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err != nil {
+		t.Fatalf("--update error: %v", err)
+	}
+
+	// File should NOT be overwritten
+	data, _ := os.ReadFile(filepath.Join(dir, ".claude", "agents", "test.md"))
+	if string(data) != "local changes" {
+		t.Error("differing file should not be overwritten without --force")
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "Skipped (differs)") {
+		t.Error("should warn about differing file")
+	}
+}
+
+func TestInitUpdateForce(t *testing.T) {
+	dotfiles := setupDotfiles(t)
+	dir := initAndSetupForUpdate(t, dotfiles)
+
+	// Modify local file
+	os.WriteFile(filepath.Join(dir, ".claude", "agents", "test.md"), []byte("local changes"), 0644)
+
+	resetInitFlags()
+	initUpdate = true
+	initForce = true
+	t.Setenv("DOTFILES_CLAUDE", dotfiles)
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err != nil {
+		t.Fatalf("--update --force error: %v", err)
+	}
+
+	// File SHOULD be overwritten
+	data, _ := os.ReadFile(filepath.Join(dir, ".claude", "agents", "test.md"))
+	if string(data) != "agents content" {
+		t.Errorf("--force should overwrite, got: %s", data)
+	}
+}
+
+func TestInitUpdateFilters(t *testing.T) {
+	dotfiles := setupDotfiles(t)
+	dir := initAndSetupForUpdate(t, dotfiles)
+
+	// Add new files to agents and commands
+	os.WriteFile(filepath.Join(dotfiles, "agents", "new.md"), []byte("new"), 0644)
+	os.WriteFile(filepath.Join(dotfiles, "commands", "new.md"), []byte("new"), 0644)
+
+	resetInitFlags()
+	initUpdate = true
+	initAgentsOnly = true
+	t.Setenv("DOTFILES_CLAUDE", dotfiles)
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err != nil {
+		t.Fatalf("--update --agents-only error: %v", err)
+	}
+
+	// agents/new.md should be copied
+	if _, err := os.Stat(filepath.Join(dir, ".claude", "agents", "new.md")); err != nil {
+		t.Error("agents/new.md should be copied with --agents-only")
+	}
+
+	// commands/new.md should NOT be copied
+	if _, err := os.Stat(filepath.Join(dir, ".claude", "commands", "new.md")); err == nil {
+		t.Error("commands/new.md should not be copied with --agents-only")
+	}
+}
+
+func TestInitUpdateNoClaude(t *testing.T) {
+	t.Setenv("DOTFILES_CLAUDE", t.TempDir())
+	dir := t.TempDir()
+	// Don't init — no .claude/ dir
+
+	resetInitFlags()
+	initUpdate = true
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	err := cmd.RunE(cmd, []string{dir})
+	if err == nil {
+		t.Fatal("expected error when .claude/ doesn't exist")
+	}
+	if !strings.Contains(err.Error(), ".claude/ doesn't exist") {
+		t.Errorf("expected '.claude/ doesn't exist' error, got: %v", err)
+	}
+}
+
+func TestUpdateClaudeMD(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create a CLAUDE.md with some sections removed
+	claudeMD := filepath.Join(dir, "CLAUDE.md")
+	os.WriteFile(claudeMD, []byte("# CLAUDE.md\n\n## Project Overview\n\nMy project.\n\n## Git Workflow\n\nCustom workflow.\n"), 0644)
+
+	buf := new(bytes.Buffer)
+	err := updateClaudeMD(buf, dir)
+	if err != nil {
+		t.Fatalf("updateClaudeMD error: %v", err)
+	}
+
+	data, _ := os.ReadFile(claudeMD)
+	content := string(data)
+
+	// Should still have original sections
+	if !strings.Contains(content, "My project.") {
+		t.Error("original content should be preserved")
+	}
+
+	// Should have added missing sections from template
+	output := buf.String()
+	if !strings.Contains(output, "added section") {
+		t.Error("should report added sections")
+	}
+
+	// The file should now have more content than before
+	if !strings.Contains(content, "## Thoughts Directory") {
+		t.Error("missing template section should be appended")
+	}
+}
+
+func TestUpdateClaudeMDUpToDate(t *testing.T) {
+	dir := t.TempDir()
+
+	// First init to get full CLAUDE.md
+	resetInitFlags()
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	if err := cmd.RunE(cmd, []string{dir}); err != nil {
+		t.Fatalf("init error: %v", err)
+	}
+
+	// Now run updateClaudeMD — should be up to date
+	buf.Reset()
+	err := updateClaudeMD(buf, dir)
+	if err != nil {
+		t.Fatalf("updateClaudeMD error: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "up to date") {
+		t.Errorf("expected 'up to date' message, got: %s", output)
+	}
+}
+
+func TestCopyWithUpdate(t *testing.T) {
+	src := t.TempDir()
+	dest := t.TempDir()
+
+	// Create source files
+	os.WriteFile(filepath.Join(src, "new.txt"), []byte("new"), 0644)
+	os.WriteFile(filepath.Join(src, "same.txt"), []byte("same"), 0644)
+	os.WriteFile(filepath.Join(src, "diff.txt"), []byte("source version"), 0644)
+
+	// Create dest files (same and diff)
+	os.WriteFile(filepath.Join(dest, "same.txt"), []byte("same"), 0644)
+	os.WriteFile(filepath.Join(dest, "diff.txt"), []byte("local version"), 0644)
+
+	buf := new(bytes.Buffer)
+	stats, err := copyWithUpdate(buf, src, dest, false)
+	if err != nil {
+		t.Fatalf("copyWithUpdate error: %v", err)
+	}
+
+	if stats.copied != 1 {
+		t.Errorf("expected 1 copied, got %d", stats.copied)
+	}
+	if stats.skipped != 2 { // same.txt + diff.txt (not forced)
+		t.Errorf("expected 2 skipped, got %d", stats.skipped)
+	}
+	if stats.updated != 0 {
+		t.Errorf("expected 0 updated, got %d", stats.updated)
+	}
+
+	// new.txt should exist
+	data, _ := os.ReadFile(filepath.Join(dest, "new.txt"))
+	if string(data) != "new" {
+		t.Errorf("new.txt: got %q", data)
+	}
+
+	// diff.txt should be unchanged (no force)
+	data, _ = os.ReadFile(filepath.Join(dest, "diff.txt"))
+	if string(data) != "local version" {
+		t.Error("diff.txt should not be overwritten without force")
+	}
+
+	// Now with force
+	buf.Reset()
+	stats, err = copyWithUpdate(buf, src, dest, true)
+	if err != nil {
+		t.Fatalf("copyWithUpdate force error: %v", err)
+	}
+	if stats.updated != 1 {
+		t.Errorf("expected 1 updated with force, got %d", stats.updated)
+	}
+	data, _ = os.ReadFile(filepath.Join(dest, "diff.txt"))
+	if string(data) != "source version" {
+		t.Error("diff.txt should be overwritten with force")
 	}
 }
