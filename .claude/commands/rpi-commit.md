@@ -70,8 +70,3 @@ Pre-commit hooks (linting, formatting, type checking) may reject the commit. Whe
 - Re-stage the affected files
 - Create a **new** commit — never use `--amend`, because the failed commit didn't actually happen and amending would modify the previous unrelated commit
 
-## Attribution
-
-- NEVER add co-author information or Claude attribution
-- No "Generated with Claude" or "Co-Authored-By" lines
-- Write messages as if the user wrote them
