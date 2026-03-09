@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -17,10 +16,6 @@ var (
 	initForce         bool
 	initNoClaudeMD    bool
 	initTrackThoughts bool
-	initUpdate        bool
-	initAgentsOnly    bool
-	initCommandsOnly  bool
-	initSkillsOnly    bool
 )
 
 const (
@@ -57,10 +52,6 @@ func init() {
 	initCmd.Flags().BoolVar(&initForce, "force", false, "Overwrite existing files and directories")
 	initCmd.Flags().BoolVar(&initNoClaudeMD, "no-claude-md", false, "Skip CLAUDE.md generation")
 	initCmd.Flags().BoolVar(&initTrackThoughts, "track-thoughts", false, "Do not add .thoughts/ to .gitignore")
-	initCmd.Flags().BoolVar(&initUpdate, "update", false, "Update/refresh configs from dotfiles (sync mode)")
-	initCmd.Flags().BoolVar(&initAgentsOnly, "agents-only", false, "Only copy agents (use with --update)")
-	initCmd.Flags().BoolVar(&initCommandsOnly, "commands-only", false, "Only copy commands (use with --update)")
-	initCmd.Flags().BoolVar(&initSkillsOnly, "skills-only", false, "Only copy skills (use with --update)")
 	rootCmd.AddCommand(initCmd)
 }
 
@@ -73,11 +64,6 @@ func runInit(cmd *cobra.Command, args []string) error {
 	w := cmd.OutOrStdout()
 
 	claudeDir := filepath.Join(targetDir, ".claude")
-
-	// Handle update mode
-	if initUpdate {
-		return runInitUpdate(w, targetDir, claudeDir)
-	}
 
 	// Check if already initialized
 	if _, err := os.Stat(claudeDir); err == nil && !initForce {
@@ -185,53 +171,6 @@ func ensureGitignoreEntry(w io.Writer, targetDir, entry string) error {
 	return nil
 }
 
-func dotfilesSource() string {
-	if v := os.Getenv("DOTFILES_CLAUDE"); v != "" {
-		return v
-	}
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".claude")
-}
-
-type component struct {
-	name string
-	src  string
-	dest string
-}
-
-func filterComponents(source, claudeDir string) []component {
-	all := []component{
-		{"agents", filepath.Join(source, "agents"), filepath.Join(claudeDir, "agents")},
-		{"commands", filepath.Join(source, "commands"), filepath.Join(claudeDir, "commands")},
-		{"skills", filepath.Join(source, "skills"), filepath.Join(claudeDir, "skills")},
-		{"hooks", filepath.Join(source, "hooks"), filepath.Join(claudeDir, "hooks")},
-	}
-
-	// If any --*-only flag is set, filter to just that component
-	if initAgentsOnly || initCommandsOnly || initSkillsOnly {
-		var filtered []component
-		for _, c := range all {
-			switch c.name {
-			case "agents":
-				if initAgentsOnly {
-					filtered = append(filtered, c)
-				}
-			case "commands":
-				if initCommandsOnly {
-					filtered = append(filtered, c)
-				}
-			case "skills":
-				if initSkillsOnly {
-					filtered = append(filtered, c)
-				}
-			}
-		}
-		return filtered
-	}
-
-	return all
-}
-
 // copyDirectory copies all files and subdirectories from src to dest.
 // Returns the number of top-level items copied.
 func copyDirectory(src, dest string) (int, error) {
@@ -262,179 +201,6 @@ func copyDirectory(src, dest string) (int, error) {
 		count++
 	}
 	return count, nil
-}
-
-func runInitUpdate(w io.Writer, targetDir, claudeDir string) error {
-	if _, err := os.Stat(claudeDir); os.IsNotExist(err) {
-		return fmt.Errorf(".claude/ doesn't exist; run 'rpi init' first")
-	}
-
-	source := dotfilesSource()
-	if _, err := os.Stat(source); os.IsNotExist(err) {
-		return fmt.Errorf("dotfiles source not found: %s", source)
-	}
-
-	for _, c := range filterComponents(source, claudeDir) {
-		stats, err := copyWithUpdate(w, c.src, c.dest, initForce)
-		if err != nil {
-			logWarning(w, fmt.Sprintf("Failed to update %s: %v", c.name, err))
-			continue
-		}
-		logInfo(w, fmt.Sprintf("%s: %d new, %d updated, %d unchanged", c.name, stats.copied, stats.updated, stats.skipped))
-	}
-
-	if !initNoClaudeMD {
-		if err := updateClaudeMD(w, targetDir); err != nil {
-			logWarning(w, fmt.Sprintf("Failed to update CLAUDE.md: %v", err))
-		}
-	}
-
-	return nil
-}
-
-type updateStats struct {
-	copied  int
-	updated int
-	skipped int
-}
-
-// copyWithUpdate syncs files from src to dest with diff-aware logic.
-// New files are copied. Unchanged files are skipped. Differing files
-// are only overwritten when force is true; otherwise a warning is logged.
-func copyWithUpdate(w io.Writer, src, dest string, force bool) (updateStats, error) {
-	var stats updateStats
-	entries, err := os.ReadDir(src)
-	if err != nil {
-		return stats, err
-	}
-	if err := os.MkdirAll(dest, 0755); err != nil {
-		return stats, err
-	}
-	for _, entry := range entries {
-		srcPath := filepath.Join(src, entry.Name())
-		destPath := filepath.Join(dest, entry.Name())
-		if entry.IsDir() {
-			sub, err := copyWithUpdate(w, srcPath, destPath, force)
-			if err != nil {
-				return stats, err
-			}
-			stats.copied += sub.copied
-			stats.updated += sub.updated
-			stats.skipped += sub.skipped
-			continue
-		}
-		srcData, err := os.ReadFile(srcPath)
-		if err != nil {
-			return stats, err
-		}
-		destData, destErr := os.ReadFile(destPath)
-		if destErr != nil {
-			// New file
-			if err := os.WriteFile(destPath, srcData, 0644); err != nil {
-				return stats, err
-			}
-			stats.copied++
-		} else if bytes.Equal(srcData, destData) {
-			stats.skipped++
-		} else if force {
-			if err := os.WriteFile(destPath, srcData, 0644); err != nil {
-				return stats, err
-			}
-			stats.updated++
-		} else {
-			logWarning(w, fmt.Sprintf("Skipped (differs): %s (use --force to overwrite)", entry.Name()))
-			stats.skipped++
-		}
-	}
-	return stats, nil
-}
-
-type headingSection struct {
-	heading string
-	section string // full text from ## heading to next ## heading
-}
-
-func parseHeadingSections(content string) []headingSection {
-	lines := strings.Split(content, "\n")
-	var sections []headingSection
-	var current *headingSection
-	var buf strings.Builder
-
-	for _, line := range lines {
-		if strings.HasPrefix(line, "## ") {
-			if current != nil {
-				current.section = buf.String()
-				sections = append(sections, *current)
-				buf.Reset()
-			}
-			current = &headingSection{heading: line}
-		}
-		if current != nil {
-			buf.WriteString(line)
-			buf.WriteString("\n")
-		}
-	}
-	if current != nil {
-		current.section = buf.String()
-		sections = append(sections, *current)
-	}
-	return sections
-}
-
-func parseHeadingSet(content string) map[string]bool {
-	set := make(map[string]bool)
-	for _, line := range strings.Split(content, "\n") {
-		if strings.HasPrefix(line, "## ") {
-			set[line] = true
-		}
-	}
-	return set
-}
-
-// updateClaudeMD finds ## sections in the template that are missing from
-// the existing CLAUDE.md and appends them at the end.
-func updateClaudeMD(w io.Writer, targetDir string) error {
-	tmplContent, err := templates.Get("CLAUDE.md")
-	if err != nil {
-		return err
-	}
-	outputPath := filepath.Join(targetDir, "CLAUDE.md")
-	existing, err := os.ReadFile(outputPath)
-	if err != nil {
-		// No existing file — write template directly
-		if err := os.WriteFile(outputPath, []byte(tmplContent), 0644); err != nil {
-			return err
-		}
-		logSuccess(w, "Created CLAUDE.md from template")
-		return nil
-	}
-
-	tmplSections := parseHeadingSections(tmplContent)
-	existingHeadings := parseHeadingSet(string(existing))
-
-	added := 0
-	var appendBuf strings.Builder
-	for _, s := range tmplSections {
-		if !existingHeadings[s.heading] {
-			appendBuf.WriteString("\n")
-			appendBuf.WriteString(s.section)
-			added++
-			logSuccess(w, fmt.Sprintf("CLAUDE.md: added section \"%s\"", strings.TrimPrefix(s.heading, "## ")))
-		}
-	}
-
-	if added == 0 {
-		logInfo(w, "CLAUDE.md: up to date")
-		return nil
-	}
-
-	f, err := os.OpenFile(outputPath, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = f.WriteString(appendBuf.String())
-	return err
 }
 
 func copyDirRecursive(src, dest string) error {
