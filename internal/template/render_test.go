@@ -52,7 +52,7 @@ func TestGenerateFilename(t *testing.T) {
 		{"structure", ctx, "2026-03-08-templates-scaffold.md"},
 		{"plan", ctx, "2026-03-08-cli-002-templates-scaffold.md"},
 		{"ticket", ctx, "cli-002-templates-scaffold.md"},
-		{"ticket-index", ctx, "index.md"},
+		{"ticket-index", ctx, "cli-index.md"},
 		{"verify-report", ctx, "2026-03-08-verify-templates-scaffold.md"},
 		{"spec", ctx, "templates-scaffold.md"},
 	}

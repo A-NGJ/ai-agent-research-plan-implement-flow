@@ -85,7 +85,7 @@ func GenerateFilename(artifactType string, ctx *RenderContext) string {
 	case "ticket":
 		return fmt.Sprintf("%s-%03d-%s.md", ctx.Prefix, ctx.Number, slug)
 	case "ticket-index":
-		return "index.md"
+		return fmt.Sprintf("%s-index.md", ctx.Prefix)
 	case "verify-report":
 		return fmt.Sprintf("%s-verify-%s.md", datePart, slug)
 	case "spec":
