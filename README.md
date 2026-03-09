@@ -23,6 +23,8 @@ research/   designs/   plans/     tests +
 - [The `rpi init` Command](#the-rpi-init-command)
 - [Tips](#tips)
 - [Using with Other AI Coding Tools](#using-with-other-ai-coding-tools)
+- [Why a Go Binary](#why-a-go-binary)
+- [How It Compares](#how-it-compares)
 - [Project Structure](#project-structure)
 - [License](#license)
 
@@ -36,11 +38,21 @@ AI coding assistants are powerful but unpredictable when given large tasks. They
 - **Scaling to complexity** -- Simple bug fix? Skip straight to Plan -> Implement. Complex feature spanning multiple systems? Use the full pipeline with Tickets.
 - **Keeping the context window small** -- LLMs produce better output when focused. By breaking work into stages, each conversation stays scoped to one job (research *or* design *or* implementation) rather than cramming everything into a single bloated context. The `.thoughts/` documents carry knowledge between stages, so the AI starts each stage with exactly the context it needs -- no more, no less.
 
+### Key Concepts
+
+- **Staged pipeline** -- Work flows through discrete stages (Research → Design → Plan → Implement), each with a clear input and output. You choose how many stages to use based on task complexity.
+- **`.thoughts/` as persistent context** -- All artifacts live in a local directory that survives across sessions. The AI doesn't need to re-discover your codebase every time -- it reads the documents from previous stages.
+- **Artifact chains** -- Documents link to each other through frontmatter metadata (a plan links to its design, which links to its research). The `rpi chain` command resolves these links automatically so the AI loads exactly the context it needs.
+- **Frontmatter-driven metadata** -- Every document carries YAML frontmatter with status, dates, tags, and cross-references. The CLI uses this for filtering, status transitions, and archive decisions -- keeping mechanical bookkeeping out of the LLM.
+- **Deterministic CLI + creative LLM** -- Mechanical operations (template scaffolding, frontmatter parsing, artifact scanning, verification checks) run in a Go binary. Creative operations (research, design decisions, code generation) stay with the LLM. Each does what it's best at.
+
 ## Quick Start
 
 ### Prerequisites
 
 - [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed and configured
+- [Go 1.23+](https://go.dev/dl/) (to build the `rpi` binary from source)
+- Git
 
 ### Installation
 
@@ -133,6 +145,30 @@ See [full `rpi init` documentation](docs/rpi-init.md) for all options and flags.
 ## Using with Other AI Coding Tools
 
 This workflow is built for Claude Code, but the methodology applies to any AI coding agent. The `.thoughts/` directory, document templates, and staged pipeline work regardless of tooling. For other tools, follow their documentation on how to register custom commands and load prompt files, then adapt the files in `.claude/` accordingly.
+
+## Why a Go Binary
+
+The `rpi` CLI exists to keep mechanical work out of the LLM's context window. Every token an LLM spends on parsing YAML frontmatter, resolving file links, or generating boilerplate is a token not spent on design thinking or code generation.
+
+The binary handles operations that are **deterministic and error-prone for LLMs**:
+
+- **Template scaffolding** -- `rpi scaffold` generates documents with correct frontmatter, dates, and file paths. An LLM asked to do this will occasionally hallucinate fields or misformat dates.
+- **Artifact chain resolution** -- `rpi chain` follows frontmatter links recursively (plan → design → research) and returns a flat list of files to load. This is a mechanical graph traversal, not a creative task.
+- **Frontmatter manipulation** -- `rpi frontmatter` reads, writes, and validates status transitions. YAML parsing in natural language is fragile; a CLI does it reliably every time.
+- **Directory scanning and filtering** -- `rpi scan` walks `.thoughts/`, parses metadata, and filters by status/type. Fast and deterministic vs. asking the LLM to shell out and parse results.
+- **Verification checks** -- `rpi verify` counts checkboxes, checks file coverage against git changes, and scans for TODO markers. Mechanical validation that should never consume context tokens.
+
+Everything is embedded in a single binary via Go's `embed` package -- no external config repos, no dotfile dependencies. `rpi init` bootstraps any project from the binary alone.
+
+## How It Compares
+
+What sets RPI apart from other spec-driven development tools is the combination of two things: **reviewable artifacts that keep a human in the loop at every stage**, and a **compiled CLI that keeps mechanical work out of the LLM's context window**.
+
+Every stage produces a document you can read, edit, reject, or share with your team before the next stage starts. The Go binary handles the bookkeeping (scaffolding, frontmatter, artifact linking, verification) so the LLM spends its tokens on thinking, not parsing.
+
+**vs. [OpenSpec](https://github.com/Fission-AI/OpenSpec)** -- OpenSpec gives the AI more autonomy, implementing an entire plan in one pass. RPI gives you fine-grained control -- you review each implementation phase before it's executed, with git commits between phases for versioning and easy rollback.
+
+**vs. unstructured prompting** -- Without stage boundaries, the LLM researches, designs, and implements in a single pass -- no checkpoints, no review, no way to course-correct before code is written.
 
 ## Project Structure
 
