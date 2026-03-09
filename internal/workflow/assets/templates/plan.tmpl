@@ -1,0 +1,72 @@
+---
+date: {{.Date}}
+topic: "{{.Topic}}"
+tags: [plan{{if .Tags}}, {{.Tags}}{{end}}]
+status: draft
+{{- if .Ticket}}
+ticket: "{{.Ticket}}"
+{{- end}}
+{{- if .Design}}
+design: "{{.Design}}"
+{{- end}}
+---
+
+# {{if .Ticket}}{{.Ticket}}: {{end}}{{.Topic}} — Implementation Plan
+
+## Overview
+<!-- TODO: Fill in overview -->
+
+**Scope**: <!-- TODO: N files modified, M new files -->
+
+## Source Documents
+{{- if .Ticket}}
+- **Ticket**: <!-- TODO: path --> — {{.Ticket}}
+{{- end}}
+{{- if .Design}}
+- **Design**: {{.Design}}
+{{- end}}
+{{- if .Research}}
+- **Research**: {{.Research}}
+{{- end}}
+
+## Phase 1: <!-- TODO: Descriptive Name -->
+
+### Overview
+<!-- TODO: What this phase accomplishes -->
+
+### Tasks:
+
+#### 1. <!-- TODO: Component/File Group -->
+**File**: <!-- TODO: path -->
+**Changes**: <!-- TODO: summary -->
+
+#### 2. Tests
+**File**: <!-- TODO: test file path -->
+**Changes**: <!-- TODO: test coverage -->
+
+### Success Criteria:
+
+#### Automated Verification:
+- [ ] <!-- TODO: specific automated checks, e.g., tests passing, linting clean -->
+
+#### Manual Verification:
+- [ ] <!-- TODO: specific verification -->
+
+### Commit:
+- [ ] Stage: <!-- TODO: files -->
+- [ ] Message: `<!-- TODO: type(scope): message -->`
+
+**Note**: Pause for manual confirmation before proceeding to next phase.
+
+---
+
+## References
+{{- if .Ticket}}
+- Ticket: <!-- TODO: path --> — {{.Ticket}}
+{{- end}}
+{{- if .Design}}
+- Design: {{.Design}}
+{{- end}}
+{{- if .Research}}
+- Research: {{.Research}}
+{{- end}}
