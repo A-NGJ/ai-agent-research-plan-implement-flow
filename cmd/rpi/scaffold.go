@@ -10,27 +10,19 @@ import (
 )
 
 var (
-	topicFlag     string
-	ticketFlag    string
-	designFlag    string
-	researchFlag  string
-	structureFlag string
-	proposalFlag  string
-	tagsFlag      string
-	prefixFlag    string
-	numberFlag    int
-	writeFlag     bool
-	forceFlag     bool
+	topicFlag    string
+	ticketFlag   string
+	researchFlag string
+	proposalFlag string
+	tagsFlag     string
+	writeFlag    bool
+	forceFlag    bool
 )
 
 // typeDirs maps artifact type to its subdirectory under thoughts-dir.
 var typeDirs = map[string]string{
 	"research":      "research",
-	"design":        "designs",
 	"plan":          "plans",
-	"ticket":        "tickets",
-	"ticket-index":  "tickets",
-	"structure":     "structures",
 	"propose":       "proposals",
 	"verify-report": "reviews",
 	"spec":          "specs",
@@ -38,8 +30,7 @@ var typeDirs = map[string]string{
 
 // validTypes lists all supported artifact types.
 var validTypes = []string{
-	"research", "design", "plan", "ticket", "ticket-index",
-	"structure", "propose", "verify-report", "spec",
+	"research", "propose", "plan", "verify-report", "spec",
 }
 
 var scaffoldCmd = &cobra.Command{
@@ -47,7 +38,7 @@ var scaffoldCmd = &cobra.Command{
 	Short: "Generate artifact files from templates",
 	Long: `Generate pre-filled artifact files from .tmpl templates.
 
-Types: research, design, plan, ticket, ticket-index, structure, propose, verify-report, spec
+Types: research, propose, plan, verify-report, spec
 
 By default, outputs rendered markdown to stdout. Use --write to create the file
 at the correct path under .thoughts/.`,
@@ -60,13 +51,9 @@ func init() {
 	addTemplatesDirFlag(scaffoldCmd)
 	scaffoldCmd.Flags().StringVar(&topicFlag, "topic", "", "Topic/title for the artifact")
 	scaffoldCmd.Flags().StringVar(&ticketFlag, "ticket", "", "Ticket ID (e.g., cli-002)")
-	scaffoldCmd.Flags().StringVar(&designFlag, "design", "", "Path to design document")
 	scaffoldCmd.Flags().StringVar(&researchFlag, "research", "", "Path to research document")
-	scaffoldCmd.Flags().StringVar(&structureFlag, "structure", "", "Path to structure document")
 	scaffoldCmd.Flags().StringVar(&proposalFlag, "proposal", "", "Path to proposal document")
 	scaffoldCmd.Flags().StringVar(&tagsFlag, "tags", "", "Comma-separated tags")
-	scaffoldCmd.Flags().StringVar(&prefixFlag, "prefix", "", "Ticket prefix (for ticket/ticket-index types)")
-	scaffoldCmd.Flags().IntVar(&numberFlag, "number", 0, "Ticket number (for ticket type)")
 	scaffoldCmd.Flags().BoolVar(&writeFlag, "write", false, "Write to file instead of stdout")
 	scaffoldCmd.Flags().BoolVar(&forceFlag, "force", false, "Allow overwriting existing files")
 
@@ -90,26 +77,18 @@ func runScaffold(cmd *cobra.Command, args []string) error {
 
 	// Build render context
 	ctx := &tmpl.RenderContext{
-		Type:      artifactType,
-		Topic:     topicFlag,
-		Ticket:    ticketFlag,
-		Design:    designFlag,
-		Research:  researchFlag,
-		Structure: structureFlag,
-		Proposal:  proposalFlag,
-		Tags:      tagsFlag,
-		Prefix:    prefixFlag,
-		Number:    numberFlag,
+		Type:     artifactType,
+		Topic:    topicFlag,
+		Ticket:   ticketFlag,
+		Research: researchFlag,
+		Proposal: proposalFlag,
+		Tags:     tagsFlag,
 	}
 
 	// Set type label
 	typeLabels := map[string]string{
 		"research":      "Research",
-		"design":        "Design",
 		"plan":          "Plan",
-		"ticket":        "Ticket",
-		"ticket-index":  "Ticket Index",
-		"structure":     "Structure",
 		"propose":       "Proposal",
 		"verify-report": "Verification Report",
 		"spec":          "Spec",
@@ -142,23 +121,9 @@ func runScaffold(cmd *cobra.Command, args []string) error {
 
 func validateRequiredFlags(artifactType string) error {
 	switch artifactType {
-	case "research", "design", "plan", "structure", "propose", "verify-report", "spec":
+	case "research", "plan", "propose", "verify-report", "spec":
 		if topicFlag == "" {
 			return fmt.Errorf("--topic is required for type %q", artifactType)
-		}
-	case "ticket":
-		if topicFlag == "" {
-			return fmt.Errorf("--topic is required for type %q", artifactType)
-		}
-		if ticketFlag == "" {
-			return fmt.Errorf("--ticket is required for type %q", artifactType)
-		}
-	case "ticket-index":
-		if topicFlag == "" {
-			return fmt.Errorf("--topic is required for type %q", artifactType)
-		}
-		if prefixFlag == "" {
-			return fmt.Errorf("--prefix is required for type %q", artifactType)
 		}
 	}
 	return nil

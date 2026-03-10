@@ -83,7 +83,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	// Create .thoughts/ subdirs
 	thoughtsDir := filepath.Join(targetDir, ".thoughts")
 	thoughtsSubdirs := []string{
-		"research", "designs", "structures", "tickets", "proposals",
+		"research", "proposals",
 		"plans", "specs", "reviews", "archive", "prs",
 	}
 	for _, d := range thoughtsSubdirs {

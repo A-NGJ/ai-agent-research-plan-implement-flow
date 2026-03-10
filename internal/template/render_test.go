@@ -38,8 +38,6 @@ func TestGenerateFilename(t *testing.T) {
 		Date:   "2026-03-08T10:00:00+01:00",
 		Topic:  "templates scaffold",
 		Ticket: "cli-002",
-		Prefix: "cli",
-		Number: 2,
 	}
 
 	tests := []struct {
@@ -48,12 +46,8 @@ func TestGenerateFilename(t *testing.T) {
 		want         string
 	}{
 		{"research", ctx, "2026-03-08-templates-scaffold.md"},
-		{"design", ctx, "2026-03-08-templates-scaffold.md"},
-		{"structure", ctx, "2026-03-08-templates-scaffold.md"},
 		{"propose", ctx, "2026-03-08-templates-scaffold.md"},
 		{"plan", ctx, "2026-03-08-cli-002-templates-scaffold.md"},
-		{"ticket", ctx, "cli-002-templates-scaffold.md"},
-		{"ticket-index", ctx, "cli-index.md"},
 		{"verify-report", ctx, "2026-03-08-verify-templates-scaffold.md"},
 		{"spec", ctx, "templates-scaffold.md"},
 	}
@@ -191,12 +185,9 @@ func TestRenderAllTemplates(t *testing.T) {
 		Repository: "test-repo",
 		Topic:      "Test Topic",
 		Ticket:     "cli-007",
-		Design:     ".thoughts/designs/2026-03-08-test.md",
 		Research:   ".thoughts/research/2026-03-08-test.md",
-		Structure:  ".thoughts/structures/2026-03-08-test.md",
+		Proposal:   ".thoughts/proposals/2026-03-08-test.md",
 		Tags:       "go, cli",
-		Prefix:     "cli",
-		Number:     7,
 		TypeLabel:  "Plan",
 	}
 
@@ -205,11 +196,7 @@ func TestRenderAllTemplates(t *testing.T) {
 		wantInOutput []string
 	}{
 		{"research", []string{"# Research: Test Topic", "researcher: Claude", "git_commit: abc1234"}},
-		{"design", []string{"# Design: Test Topic", "related_research:"}},
-		{"plan", []string{"# cli-007: Test Topic", "ticket: \"cli-007\"", "design: \".thoughts/designs/"}},
-		{"ticket", []string{"# cli-007: Test Topic", "ticket_id: cli-007", "depends_on: []"}},
-		{"ticket-index", []string{"# Tickets: Test Topic", "prefix: cli"}},
-		{"structure", []string{"# Structure: Test Topic", "## Directory Layout"}},
+		{"plan", []string{"# cli-007: Test Topic", "ticket: \"cli-007\""}},
 		{"propose", []string{"# Proposal: Test Topic"}},
 		{"verify-report", []string{"# Verification Report: Test Topic", "## Completeness"}},
 		{"spec", []string{"domain: Test Topic", "## Purpose", "## Behavior"}},
@@ -248,9 +235,6 @@ func TestRenderTemplatesWithoutOptionalVars(t *testing.T) {
 		Repository: "test-repo",
 		Topic:      "Minimal Test",
 		TypeLabel:  "Plan",
-		Prefix:     "test",
-		Number:     1,
-		Ticket:     "test-001", // needed for ticket type
 	}
 
 	// Templates that should omit optional sections when vars are empty
@@ -258,9 +242,7 @@ func TestRenderTemplatesWithoutOptionalVars(t *testing.T) {
 		name        string
 		notInOutput []string
 	}{
-		{"design", []string{"related_research:"}},
 		{"plan", []string{"- **Research**:"}},
-		{"structure", []string{"- Design:"}},
 	}
 
 	for _, tt := range tests {
@@ -268,12 +250,7 @@ func TestRenderTemplatesWithoutOptionalVars(t *testing.T) {
 			// Clear optional fields
 			ctx := *minCtx
 			ctx.Research = ""
-			ctx.Design = ""
-			ctx.Structure = ""
 			ctx.Ticket = ""
-			if tt.name == "plan" {
-				// plan doesn't require ticket
-			}
 
 			result, err := RenderTemplate(tt.name, &ctx, templatesDir)
 			if err != nil {

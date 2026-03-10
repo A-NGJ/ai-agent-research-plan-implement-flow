@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/A-NGJ/ai-agent-research-plan-implement-flow/internal/frontmatter"
-	"github.com/A-NGJ/ai-agent-research-plan-implement-flow/internal/scanner"
 	"github.com/spf13/cobra"
 )
 
@@ -108,38 +107,5 @@ func runTransition(file, status string) error {
 		os.Exit(1)
 	}
 
-	// Cascade to ticket if this is a plan transitioning to active/complete
-	if (status == "active" || status == "complete") && scanner.InferType(file) == "plan" {
-		cascadeToTicket(doc, status)
-	}
-
 	return nil
-}
-
-func cascadeToTicket(planDoc *frontmatter.Document, status string) {
-	ticketID, ok := planDoc.Frontmatter["ticket"].(string)
-	if !ok || ticketID == "" {
-		return
-	}
-
-	ticketPath, err := scanner.FindByTicketID(thoughtsDirFlag, ticketID)
-	if err != nil || ticketPath == "" {
-		return
-	}
-
-	ticketDoc, err := frontmatter.Parse(ticketPath)
-	if err != nil {
-		return
-	}
-
-	if err := frontmatter.Transition(ticketDoc, status); err != nil {
-		return // skip if transition invalid (ticket already at status, etc.)
-	}
-
-	if err := frontmatter.Write(ticketDoc); err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not update ticket %s: %v\n", ticketID, err)
-		return
-	}
-
-	fmt.Fprintf(os.Stderr, "ticket %s → %s\n", ticketID, status)
 }

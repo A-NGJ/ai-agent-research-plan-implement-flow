@@ -22,7 +22,7 @@ type ArtifactInfo struct {
 type Filters struct {
 	Status     string
 	Type       string
-	Design     string
+	Proposal   string
 	References string
 	Archivable bool
 }
@@ -108,9 +108,9 @@ func matches(doc *frontmatter.Document, info ArtifactInfo, f Filters) bool {
 		}
 	}
 
-	if f.Design != "" {
-		val, ok := getStr(doc.Frontmatter, "design")
-		if !ok || val != f.Design {
+	if f.Proposal != "" {
+		val, ok := getStr(doc.Frontmatter, "proposal")
+		if !ok || val != f.Proposal {
 			return false
 		}
 	}
@@ -239,14 +239,8 @@ func InferType(path string) string {
 		switch p {
 		case "plans":
 			return "plan"
-		case "tickets":
-			return "ticket"
-		case "designs":
-			return "design"
 		case "research":
 			return "research"
-		case "structures":
-			return "structure"
 		case "proposals":
 			return "proposal"
 		case "prs":
@@ -256,25 +250,6 @@ func InferType(path string) string {
 		}
 	}
 	return "unknown"
-}
-
-// FindByTicketID locates a ticket file by its ticket_id frontmatter field.
-// Returns the file path if found, or empty string if not found.
-func FindByTicketID(thoughtsDir, ticketID string) (string, error) {
-	ticketsDir := filepath.Join(thoughtsDir, "tickets")
-	if _, err := os.Stat(ticketsDir); os.IsNotExist(err) {
-		return "", nil
-	}
-	results, err := Scan(ticketsDir, Filters{})
-	if err != nil {
-		return "", err
-	}
-	for _, r := range results {
-		if r.TicketID != nil && *r.TicketID == ticketID {
-			return r.Path, nil
-		}
-	}
-	return "", nil
 }
 
 func getStr(fm map[string]interface{}, key string) (string, bool) {

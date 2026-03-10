@@ -187,11 +187,7 @@ func TestScaffoldAllTypes(t *testing.T) {
 		extraArgs    []string
 	}{
 		{"research", []string{"--topic", "Test research"}},
-		{"design", []string{"--topic", "Test design"}},
 		{"plan", []string{"--topic", "Test plan"}},
-		{"ticket", []string{"--topic", "Test ticket", "--ticket", "test-001"}},
-		{"ticket-index", []string{"--topic", "Test index", "--prefix", "test"}},
-		{"structure", []string{"--topic", "Test structure"}},
 		{"propose", []string{"--topic", "Test proposal"}},
 		{"verify-report", []string{"--topic", "Test verify"}},
 		{"spec", []string{"--topic", "Test spec"}},
@@ -221,21 +217,6 @@ func TestScaffoldMissingRequiredFlag(t *testing.T) {
 	}
 	if !strings.Contains(stderr, "--topic") {
 		t.Errorf("stderr should mention --topic, got: %s", stderr)
-	}
-}
-
-func TestScaffoldTicketRequiresTicketFlag(t *testing.T) {
-	binary := buildBinary(t)
-
-	_, stderr, exitCode := runRPI(t, binary,
-		"scaffold", "ticket",
-		"--topic", "Test ticket",
-	)
-	if exitCode != 2 {
-		t.Errorf("expected exit 2, got %d", exitCode)
-	}
-	if !strings.Contains(stderr, "--ticket") {
-		t.Errorf("stderr should mention --ticket, got: %s", stderr)
 	}
 }
 
@@ -301,25 +282,6 @@ func TestScaffoldPlanWithoutTicket(t *testing.T) {
 	}
 	if !strings.HasSuffix(filename, "auth-refactor.md") {
 		t.Errorf("filename should end with auth-refactor.md, got %q", filename)
-	}
-}
-
-func TestScaffoldConditionalSections(t *testing.T) {
-	binary := buildBinary(t)
-
-	// Plan without ticket — ticket section should be omitted
-	stdout, _, exitCode := runRPI(t, binary,
-		"scaffold", "plan",
-		"--topic", "Simple task",
-	)
-	if exitCode != 0 {
-		t.Fatalf("expected exit 0, got %d", exitCode)
-	}
-	if strings.Contains(stdout, "ticket:") {
-		t.Error("output should NOT contain ticket field when --ticket not provided")
-	}
-	if strings.Contains(stdout, "- **Ticket**:") {
-		t.Error("output should NOT contain Ticket source doc when --ticket not provided")
 	}
 }
 

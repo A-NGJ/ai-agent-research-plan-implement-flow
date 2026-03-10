@@ -23,25 +23,17 @@ type RenderContext struct {
 	TypeLabel  string // display label ("Research", "Design", etc.)
 
 	// User-provided (passed as flags)
-	Topic     string
-	Ticket    string
-	Design    string
-	Research  string
-	Structure string
-	Proposal  string
-	Tags      string
-	Prefix    string
-	Number    int
+	Topic    string
+	Ticket   string
+	Research string
+	Proposal string
+	Tags     string
 }
 
 // typeLabels maps artifact type to display label.
 var typeLabels = map[string]string{
 	"research":      "Research",
-	"design":        "Design",
 	"plan":          "Plan",
-	"ticket":        "Ticket",
-	"ticket-index":  "Ticket Index",
-	"structure":     "Structure",
 	"propose":       "Proposal",
 	"verify-report": "Verification Report",
 	"spec":          "Spec",
@@ -77,17 +69,13 @@ func GenerateFilename(artifactType string, ctx *RenderContext) string {
 	datePart := dateFromISO(ctx.Date)
 
 	switch artifactType {
-	case "research", "design", "structure", "propose":
+	case "research", "propose":
 		return fmt.Sprintf("%s-%s.md", datePart, slug)
 	case "plan":
 		if ctx.Ticket != "" {
 			return fmt.Sprintf("%s-%s-%s.md", datePart, ctx.Ticket, slug)
 		}
 		return fmt.Sprintf("%s-%s.md", datePart, slug)
-	case "ticket":
-		return fmt.Sprintf("%s-%03d-%s.md", ctx.Prefix, ctx.Number, slug)
-	case "ticket-index":
-		return fmt.Sprintf("%s-index.md", ctx.Prefix)
 	case "verify-report":
 		return fmt.Sprintf("%s-verify-%s.md", datePart, slug)
 	case "spec":

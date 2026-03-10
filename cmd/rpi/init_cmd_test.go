@@ -47,7 +47,7 @@ func TestInitCreatesAllDirs(t *testing.T) {
 
 	// Verify .thoughts/ subdirs
 	thoughtsSubdirs := []string{
-		"research", "designs", "structures", "tickets",
+		"research", "proposals",
 		"plans", "specs", "reviews", "archive", "prs",
 	}
 	for _, d := range thoughtsSubdirs {
@@ -123,7 +123,7 @@ func TestInitPartial(t *testing.T) {
 	}
 
 	// All dirs should exist
-	for _, d := range []string{"designs", "structures", "tickets", "specs", "reviews", "archive", "prs"} {
+	for _, d := range []string{"proposals", "specs", "reviews", "archive", "prs"} {
 		path := filepath.Join(dir, ".thoughts", d)
 		if _, err := os.Stat(path); err != nil {
 			t.Errorf(".thoughts/%s not created: %v", d, err)

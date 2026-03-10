@@ -13,7 +13,7 @@ import (
 var (
 	scanStatus     string
 	scanType       string
-	scanDesign     string
+	scanProposal   string
 	scanReferences string
 	scanArchivable bool
 )
@@ -29,8 +29,8 @@ func init() {
 	addFormatFlag(scanCmd)
 	addThoughtsDirFlag(scanCmd)
 	scanCmd.Flags().StringVar(&scanStatus, "status", "", "Filter by frontmatter status")
-	scanCmd.Flags().StringVar(&scanType, "type", "", "Filter by artifact type (ticket, plan, design, etc.)")
-	scanCmd.Flags().StringVar(&scanDesign, "design", "", "Filter by frontmatter design field")
+	scanCmd.Flags().StringVar(&scanType, "type", "", "Filter by artifact type (plan, proposal, research, etc.)")
+	scanCmd.Flags().StringVar(&scanProposal, "proposal", "", "Filter by frontmatter proposal field")
 	scanCmd.Flags().StringVar(&scanReferences, "references", "", "Find files that reference this path")
 	scanCmd.Flags().BoolVar(&scanArchivable, "archivable", false, "Show only complete/superseded artifacts not in archive/")
 	rootCmd.AddCommand(scanCmd)
@@ -40,7 +40,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	filters := scanner.Filters{
 		Status:     scanStatus,
 		Type:       scanType,
-		Design:     scanDesign,
+		Proposal:   scanProposal,
 		References: scanReferences,
 		Archivable: scanArchivable,
 	}
