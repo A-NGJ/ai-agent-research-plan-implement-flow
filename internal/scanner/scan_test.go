@@ -298,6 +298,45 @@ func TestFindReferencesBodyLine(t *testing.T) {
 	}
 }
 
+func TestFindByTicketID(t *testing.T) {
+	dir := setupTestDir(t)
+
+	path, err := FindByTicketID(dir, "t-001")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if path == "" {
+		t.Fatal("expected to find ticket t-001")
+	}
+	if !strings.HasSuffix(path, "t1.md") {
+		t.Errorf("expected path ending in t1.md, got %s", path)
+	}
+}
+
+func TestFindByTicketIDNotFound(t *testing.T) {
+	dir := setupTestDir(t)
+
+	path, err := FindByTicketID(dir, "nonexistent")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if path != "" {
+		t.Errorf("expected empty path, got %s", path)
+	}
+}
+
+func TestFindByTicketIDNoTicketsDir(t *testing.T) {
+	dir := t.TempDir()
+
+	path, err := FindByTicketID(dir, "t-001")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if path != "" {
+		t.Errorf("expected empty path, got %s", path)
+	}
+}
+
 func TestScanEmptyDir(t *testing.T) {
 	dir := t.TempDir()
 

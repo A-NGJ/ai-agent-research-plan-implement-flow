@@ -256,6 +256,25 @@ func InferType(path string) string {
 	return "unknown"
 }
 
+// FindByTicketID locates a ticket file by its ticket_id frontmatter field.
+// Returns the file path if found, or empty string if not found.
+func FindByTicketID(thoughtsDir, ticketID string) (string, error) {
+	ticketsDir := filepath.Join(thoughtsDir, "tickets")
+	if _, err := os.Stat(ticketsDir); os.IsNotExist(err) {
+		return "", nil
+	}
+	results, err := Scan(ticketsDir, Filters{})
+	if err != nil {
+		return "", err
+	}
+	for _, r := range results {
+		if r.TicketID != nil && *r.TicketID == ticketID {
+			return r.Path, nil
+		}
+	}
+	return "", nil
+}
+
 func getStr(fm map[string]interface{}, key string) (string, bool) {
 	val, ok := fm[key]
 	if !ok {
