@@ -50,6 +50,7 @@ func TestGenerateFilename(t *testing.T) {
 		{"research", ctx, "2026-03-08-templates-scaffold.md"},
 		{"design", ctx, "2026-03-08-templates-scaffold.md"},
 		{"structure", ctx, "2026-03-08-templates-scaffold.md"},
+		{"propose", ctx, "2026-03-08-templates-scaffold.md"},
 		{"plan", ctx, "2026-03-08-cli-002-templates-scaffold.md"},
 		{"ticket", ctx, "cli-002-templates-scaffold.md"},
 		{"ticket-index", ctx, "cli-index.md"},
@@ -209,6 +210,7 @@ func TestRenderAllTemplates(t *testing.T) {
 		{"ticket", []string{"# cli-007: Test Topic", "ticket_id: cli-007", "depends_on: []"}},
 		{"ticket-index", []string{"# Tickets: Test Topic", "prefix: cli"}},
 		{"structure", []string{"# Structure: Test Topic", "## Directory Layout"}},
+		{"propose", []string{"# Proposal: Test Topic"}},
 		{"verify-report", []string{"# Verification Report: Test Topic", "## Completeness"}},
 		{"spec", []string{"domain: Test Topic", "## Purpose", "## Behavior"}},
 	}

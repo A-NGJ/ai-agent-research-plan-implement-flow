@@ -15,6 +15,7 @@ var (
 	designFlag    string
 	researchFlag  string
 	structureFlag string
+	proposalFlag  string
 	tagsFlag      string
 	prefixFlag    string
 	numberFlag    int
@@ -30,6 +31,7 @@ var typeDirs = map[string]string{
 	"ticket":        "tickets",
 	"ticket-index":  "tickets",
 	"structure":     "structures",
+	"propose":       "proposals",
 	"verify-report": "reviews",
 	"spec":          "specs",
 }
@@ -37,7 +39,7 @@ var typeDirs = map[string]string{
 // validTypes lists all supported artifact types.
 var validTypes = []string{
 	"research", "design", "plan", "ticket", "ticket-index",
-	"structure", "verify-report", "spec",
+	"structure", "propose", "verify-report", "spec",
 }
 
 var scaffoldCmd = &cobra.Command{
@@ -45,7 +47,7 @@ var scaffoldCmd = &cobra.Command{
 	Short: "Generate artifact files from templates",
 	Long: `Generate pre-filled artifact files from .tmpl templates.
 
-Types: research, design, plan, ticket, ticket-index, structure, verify-report, spec
+Types: research, design, plan, ticket, ticket-index, structure, propose, verify-report, spec
 
 By default, outputs rendered markdown to stdout. Use --write to create the file
 at the correct path under .thoughts/.`,
@@ -61,6 +63,7 @@ func init() {
 	scaffoldCmd.Flags().StringVar(&designFlag, "design", "", "Path to design document")
 	scaffoldCmd.Flags().StringVar(&researchFlag, "research", "", "Path to research document")
 	scaffoldCmd.Flags().StringVar(&structureFlag, "structure", "", "Path to structure document")
+	scaffoldCmd.Flags().StringVar(&proposalFlag, "proposal", "", "Path to proposal document")
 	scaffoldCmd.Flags().StringVar(&tagsFlag, "tags", "", "Comma-separated tags")
 	scaffoldCmd.Flags().StringVar(&prefixFlag, "prefix", "", "Ticket prefix (for ticket/ticket-index types)")
 	scaffoldCmd.Flags().IntVar(&numberFlag, "number", 0, "Ticket number (for ticket type)")
@@ -93,6 +96,7 @@ func runScaffold(cmd *cobra.Command, args []string) error {
 		Design:    designFlag,
 		Research:  researchFlag,
 		Structure: structureFlag,
+		Proposal:  proposalFlag,
 		Tags:      tagsFlag,
 		Prefix:    prefixFlag,
 		Number:    numberFlag,
@@ -106,6 +110,7 @@ func runScaffold(cmd *cobra.Command, args []string) error {
 		"ticket":        "Ticket",
 		"ticket-index":  "Ticket Index",
 		"structure":     "Structure",
+		"propose":       "Proposal",
 		"verify-report": "Verification Report",
 		"spec":          "Spec",
 	}
@@ -137,7 +142,7 @@ func runScaffold(cmd *cobra.Command, args []string) error {
 
 func validateRequiredFlags(artifactType string) error {
 	switch artifactType {
-	case "research", "design", "plan", "structure", "verify-report", "spec":
+	case "research", "design", "plan", "structure", "propose", "verify-report", "spec":
 		if topicFlag == "" {
 			return fmt.Errorf("--topic is required for type %q", artifactType)
 		}

@@ -247,6 +247,8 @@ func InferType(path string) string {
 			return "research"
 		case "structures":
 			return "structure"
+		case "proposals":
+			return "proposal"
 		case "prs":
 			return "pr"
 		case "reviews":

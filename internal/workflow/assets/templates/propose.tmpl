@@ -1,0 +1,49 @@
+---
+date: {{.Date}}
+topic: "{{.Topic}}"
+tags: [proposal{{if .Tags}}, {{.Tags}}{{end}}]
+status: draft
+{{- if .Research}}
+related_research: {{.Research}}
+{{- end}}
+---
+
+# Proposal: {{.Topic}}
+
+## Summary
+<!-- TODO: 1-3 sentence elevator pitch -->
+
+## Investigation Findings
+<!-- TODO: What we learned — file:line refs -->
+
+## Constraints & Requirements
+<!-- TODO: What limits our options -->
+
+## Design Decisions
+<!-- TODO: Fill in decisions using the format:
+### Decision N: [Title]
+**Chosen**: [option]
+**Alternatives considered**: [options]
+**Rationale**: [why]
+**How it works**: [details]
+-->
+
+## Architecture
+<!-- TODO: Component diagram, data flow — when applicable -->
+
+## File Structure
+<!-- TODO: New/modified files — when applicable -->
+
+## Risks & Mitigations
+<!-- TODO: Fill in risk table -->
+
+## What This Proposal Does NOT Cover
+<!-- TODO: Fill in exclusions -->
+
+## Open Questions
+<!-- TODO: Fill in or write "None" -->
+
+## References
+{{- if .Research}}
+- Research: {{.Research}}
+{{- end}}
