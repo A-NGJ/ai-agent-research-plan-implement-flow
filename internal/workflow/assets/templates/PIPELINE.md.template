@@ -3,87 +3,77 @@
 Standard workflow for taking features from idea to implementation.
 
 ```
-Research → Design → Plan → Implement
-   │          │        │        │
-   ▼          ▼        ▼        ▼
-.thoughts/  .thoughts/ .thoughts/ code +
-research/   designs/   plans/     tests +
-                                  commits
+[Explore] → Propose → Plan → Implement
+    │           │        │        │
+    ▼           ▼        ▼        ▼
+(optional)  .thoughts/ .thoughts/ code +
+.thoughts/  proposals/ plans/     tests +
+research/                         commits
 ```
 
-Optional stages for complex work:
-
-```
-Research → Design → Structure → Tickets → Plan → Implement
-                       │            │
-                       ▼            ▼
-                   .thoughts/   .thoughts/
-                   structures/  tickets/
-```
+Explore is conversational by default — no artifact unless you ask. Everything else produces a document that the next stage consumes.
 
 ---
 
-## Stage 1: Research
+## Explore
 
-**Command**: `/rpi-research`
+**Command**: `/rpi-explore`
 
-**Purpose**: Document the codebase as-is. Understand existing architecture, patterns, and constraints before proposing changes. Pure fact-finding — no suggestions, no critique.
+**Purpose**: Investigate the codebase conversationally. Understand how things work, find patterns, surface insights — without being forced to produce artifacts.
 
 **Inputs**:
-- A research question or area of interest
-- (Optional) Specific file paths, ticket references, or topics to investigate
+- A question, topic, or file path
+- Can be focused ("how does auth work?") or open-ended ("what could we improve about error handling?")
 
 **Process**:
-1. Read any directly mentioned files
-2. Decompose the question into parallel research sub-tasks
-3. Spawn sub-agents: `codebase-locator`, `codebase-analyzer`, `codebase-pattern-finder`
-4. Synthesize findings into a structured document
+1. Read mentioned files, check for existing research
+2. Scale investigation to the question (1-2 sub-agents for focused, full parallel for broad)
+3. Checkpoint after initial findings (broad questions only)
+4. Present findings with file:line references
+5. Optionally save summary to `.thoughts/research/` on request
 
-**Output**: `.thoughts/research/YYYY-MM-DD-description.md`
-- YAML frontmatter (date, researcher, git commit, branch, tags, status)
-- Research question, summary, detailed findings with `file:line` references
-- Architecture documentation, code references, open questions
+**Output**: Conversational findings (no artifact by default)
+- On user request: `.thoughts/research/YYYY-MM-DD-description.md`
 
 **When to use**:
+- "How does X work?" — understanding before proposing
 - Starting work on an unfamiliar part of the codebase
-- Before designing a feature that touches multiple systems
-- When you need to understand how something currently works
+- When you're not sure what the problem is yet
 
-**Example**:
-```
-/rpi-research
-> How does the category caching system work?
-```
+**Transition**: When insights crystallize, suggests `/rpi-propose`
 
 ---
 
-## Stage 2: Design
+## Propose
 
-**Command**: `/rpi-design`
+**Command**: `/rpi-propose`
 
-**Purpose**: Make architectural decisions and document trade-offs. Bridges research findings and implementation planning. This is where hard choices are made — choosing between approaches, identifying risks, and ensuring decisions compose well.
+**Purpose**: Investigate, analyze trade-offs, make architectural decisions, and document the chosen approach. Merges what was previously Research + Design + Structure into a single command with human checkpoints.
 
 **Inputs**:
-- Research document from Stage 1, or a description of the problem
-- Constraints, non-functional requirements, preferences
+- Plain text description → **Quick mode** (focused decision)
+- Complex feature description or path to research doc → **Full mode** (multi-decision)
+- Path to existing proposal → **Incremental mode** (update)
 
-**Modes**:
-- **Lightweight** — Focused decision between 2-3 options (single component, one pattern choice)
-- **Comprehensive** — Multi-decision feature design (new components, architectural changes)
-- **Incremental** — Updating an existing design doc with new information
+**Quick mode** (focused decisions):
+1. Quick context gathering (1-2 sub-tasks)
+2. Trade-off analysis with recommendation
+3. Write proposal doc
+4. Create/update specs
 
-**Process**:
-1. Gather context (read research, spawn sub-tasks for deeper investigation)
-2. Identify key design dimensions and present options with trade-offs
-3. Synthesize chosen options, validate they work together
-4. Write the design document
+**Full mode** (complex features):
+1. Investigate codebase (parallel sub-agents)
+2. Present findings + questions → **human checkpoint**
+3. Explore design options → **human checkpoint**
+4. Synthesize chosen direction → **human checkpoint**
+5. Write proposal doc
+6. Create/update specs
 
-**Output**: `.thoughts/designs/YYYY-MM-DD-description.md`
-- Design decisions with chosen option, alternatives, and rationale
-- Architecture overview with component interaction diagrams
-- Integration points with `file:line` references
-- Risks and mitigations table
-- Explicit out-of-scope items
+**Output**: `.thoughts/proposals/YYYY-MM-DD-description.md`
+- Summary, investigation findings, constraints
+- Design decisions with alternatives and rationale
+- Architecture and file structure (when applicable)
+- Risks and mitigations
 
 **When to use**:
 - When there are multiple valid approaches and you need to choose
@@ -92,175 +82,126 @@ Research → Design → Structure → Tickets → Plan → Implement
 
 **Example**:
 ```
-/rpi-design .thoughts/research/2026-02-26-cli-navigation.md
+/rpi-propose should we use Redis or Memcached for session caching?
+/rpi-propose .thoughts/research/2026-03-10-notifications.md
 ```
 
 ---
 
-## Stage 2.5 (Optional): Structure
-
-**Command**: `/rpi-structure`
-
-**Purpose**: Map a design to concrete file layout, module boundaries, and interfaces. Only needed for greenfield projects or major reorganizations where file structure itself is complex.
-
-**Inputs**:
-- Design document from Stage 2
-
-**Output**: `.thoughts/structures/YYYY-MM-DD-description.md`
-- File changes (new and modified)
-- Module boundaries and public APIs
-- Key interface definitions with signatures
-- Dependency graph
-
-**When to use**:
-- Greenfield projects creating many new files
-- Major module reorganizations
-- When file layout warrants dedicated discussion
-
-**Skip when**: The design doc's "File Structure" section provides sufficient coverage.
-
----
-
-## Stage 2.75 (Optional): Tickets
-
-**Command**: `/rpi-tickets`
-
-**Purpose**: Break a design into discrete, independently plannable units of work. Each ticket becomes one `/rpi-plan` → `/rpi-implement` cycle.
-
-**Inputs**:
-- Design document from Stage 2
-- (Optional) Structure document from Stage 2.5
-
-**Output**: `.thoughts/tickets/prefix-NNN-description.md` + `.thoughts/tickets/index.md`
-- Self-contained tickets with summary, scope (in/out), design context
-- Acceptance criteria, file lists, dependency graph
-- Index file with table and recommended implementation order
-
-**When to use**:
-- Design covers multiple independent concerns
-- Work spans many files across different subsystems
-- You want to implement in stages over multiple sessions
-- A single plan would result in more than ~4 phases
-
-**Skip when**: The design is focused enough for a single `/rpi-plan` pass (1-3 phases, single concern).
-
-**Example**:
-```
-/rpi-tickets .thoughts/designs/2026-02-27-notification-system.md
-```
-
----
-
-## Stage 3: Plan
+## Plan
 
 **Command**: `/rpi-plan`
 
-**Purpose**: Create a detailed, phase-by-phase implementation plan with specific file changes, code snippets, and verifiable success criteria.
+**Purpose**: Create a detailed, phase-by-phase implementation plan with specific file changes, code snippets, and verifiable success criteria. Automatically assesses scope and decomposes when needed.
 
 **Inputs**:
-- Design document, ticket, or task description
-- (Optional) Research documents for additional context
+- Proposal document → **Pipeline mode** (with scope assessment + decomposition)
+- Task description → **Standalone mode** (lightweight research + plan)
 
 **Process**:
-1. Read all provided context files fully
-2. Spawn research sub-tasks to understand current code
-3. Present understanding and ask focused questions
-4. Propose plan structure (phases), get buy-in
-5. Write detailed plan with code changes and success criteria
+1. Read all provided context (proposal, specs, key files)
+2. **Scope assessment**: single concern ≤4 phases → single plan; multiple concerns → decompose into separate plan files
+3. Define phases, success criteria, commit strategy
+4. Write plan file(s)
 
 **Output**: `.thoughts/plans/YYYY-MM-DD-description.md`
-- Overview, current state analysis, desired end state
-- Explicit "What We're NOT Doing" section
-- Phased implementation with:
-  - Specific file changes and code snippets
-  - Automated verification (commands to run)
-  - Manual verification (human testing steps)
-- Testing strategy, performance considerations, migration notes
+- Phased implementation with file changes and code snippets
+- Success criteria split into automated and manual verification
+- Commit step per phase
 
 **Key rules**:
-- No open questions in the final plan — all decisions resolved before writing
-- Success criteria split into automated vs. manual verification
-- Each phase should leave the codebase in a working state
+- No open questions in the final plan
+- Each phase leaves the codebase in a working state
+- Tests belong in the same phase as the code they test
 
 **Example**:
 ```
-/rpi-plan .thoughts/tickets/auth-001-session-management.md
-/rpi-plan .thoughts/designs/2026-02-27-category-reorganization.md
+/rpi-plan Add a retry mechanism to the webhook handler
+/rpi-plan .thoughts/proposals/2026-03-10-feature-name.md
 ```
 
 ---
 
-## Stage 4: Implement
+## Implement
 
 **Command**: `/rpi-implement`
 
 **Purpose**: Execute an approved plan phase by phase, with verification at each step.
 
 **Inputs**:
-- Plan document from Stage 3 (path to `.thoughts/plans/` file)
+- Plan document (path to `.thoughts/plans/` file)
 
 **Process**:
-1. Read the plan completely, check for existing checkmarks
-2. Read all files mentioned in the plan
-3. Implement each phase:
-   - Write code changes
-   - Run automated verification (tests, linting, type checks)
-   - Update checkboxes in the plan file
-   - Propose commit(s) with specific files and messages
-   - Pause for manual verification before next phase
-4. Resume from first unchecked item if re-invoked
+1. Read the plan, resolve artifact chain (proposal, specs)
+2. For each phase:
+   - Pre-review: present intended changes for approval
+   - Implement changes
+   - Run automated verification
+   - Sensitive-check before staging, commit
+   - Pause for manual verification
+3. After all phases: review and update specs to match final behavior
+4. Mark plan as complete
 
 **Output**: Code changes, tests, and commits
 - Working code matching the plan's specifications
 - Passing test suite
-- Clean commits (no Claude attribution)
 - Updated plan file with checked-off items
-
-**Key rules**:
-- Present intended changes before writing code
-- Pause between phases for manual verification
-- If the plan doesn't match reality, stop and communicate the mismatch
-- Run full test suite before committing
+- Updated specs reflecting final behavior
 
 **Example**:
 ```
-/rpi-implement .thoughts/plans/2026-02-27-category-reorganization.md
+/rpi-implement .thoughts/plans/2026-03-10-feature-name.md
 ```
 
 ---
 
 ## Quick Reference
 
-| Stage | Command | Input | Output Location |
-|-------|---------|-------|-----------------|
-| Research | `/rpi-research` | Question, topic, or vague idea | `.thoughts/research/` |
-| Design | `/rpi-design` | Research doc or problem description | `.thoughts/designs/` |
-| Structure | `/rpi-structure` | Design doc | `.thoughts/structures/` |
-| Tickets | `/rpi-tickets` | Design doc (+ structure doc) | `.thoughts/tickets/` |
-| Plan | `/rpi-plan` | Design doc, ticket, or task description | `.thoughts/plans/` |
-| Implement | `/rpi-implement` | Plan doc | Code + tests + commits |
-| Commit | `/rpi-commit` | Working tree changes | Git commits |
-| Verify | `/rpi-verify` | Design/plan doc or auto-detect | Verification report |
-| Archive | `/rpi-archive` | Completed artifact paths or scan | `.thoughts/archive/` |
+| Command | Input | Output |
+|---------|-------|--------|
+| `/rpi-explore` | Question or topic | Conversational (optional `.thoughts/research/`) |
+| `/rpi-propose` | Description, research doc, or existing proposal | `.thoughts/proposals/` |
+| `/rpi-plan` | Proposal doc or task description | `.thoughts/plans/` |
+| `/rpi-implement` | Plan doc | Code + tests + commits |
+| `/rpi-commit` | Working tree changes | Git commits |
+| `/rpi-verify` | Proposal/plan doc or auto-detect | `.thoughts/reviews/` |
+| `/rpi-archive` | Completed artifact paths or scan | `.thoughts/archive/` |
 
 ## Choosing Your Path
 
-**Simple bug fix or small change**:
+**"How does X work?"**:
+```
+Explore
+```
+
+**Bug fix or small change**:
 ```
 Plan → Implement
 ```
 
-**Focused feature (single concern, <4 phases)**:
+**Focused feature (single concern)**:
 ```
-Research → Design → Plan → Implement
-```
-
-**Complex feature (multi-concern, many files)**:
-```
-Research → Design → Tickets → Plan (per ticket) → Implement (per ticket)
+Propose → Plan → Implement
 ```
 
-**Greenfield or major reorganization**:
+**Unclear feature (need to understand first)**:
 ```
-Research → Design → Structure → Tickets → Plan → Implement
+Explore → Propose → Plan → Implement
+```
+
+**Complex multi-concern feature**:
+```
+Propose → Plan (decomposes) → Implement (per unit)
+```
+
+## Spec Lifecycle
+
+Specs in `.thoughts/specs/` are living documents that track module behavior across the pipeline:
+
+```
+Propose:   create/update specs (baseline behavior, pre-change)
+              ↓
+Plan:      read specs as implementation guidelines
+              ↓
+Implement: update specs if behavior diverged (final behavior, post-change)
 ```

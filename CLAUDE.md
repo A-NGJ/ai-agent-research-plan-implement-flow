@@ -7,7 +7,7 @@ This file provides guidance to Claude Code when working with this repository.
 This project introduces a structured workflow for software development, emphasizing clear documentation, incremental implementation, and rigorous testing.
 
 It consists of the following key components:
-- **RPI Workflow**: A set of commands for Research-Plan-Implement workflow in form of commands and skills in markdown format.
+- **RPI Workflow**: A set of commands for the Explore-Propose-Plan-Implement workflow in form of commands and skills in markdown format.
 - **RPI Binary**: A command-line tool to manage the RPI workflow, written in go.
 
 ## Git Workflow 
@@ -20,32 +20,32 @@ This project uses a `.thoughts/` directory for persistent context:
 
 ```
 .thoughts/
-├── research/      # Codebase research notes
+├── research/      # Codebase research notes (optional, from /rpi-explore)
+├── proposals/     # Solution proposals (created by /rpi-propose)
 ├── plans/         # Implementation plans (created by /rpi-plan)
-├── designs/       # Design documents
-├── structures/    # Structure documents
-├── tickets/       # Ticket documentation
+├── specs/         # Living behavioral specs
+├── reviews/       # Verification reports
 ├── prs/           # PR descriptions
-├── reviews/       # Code review reports
+├── archive/       # Archived completed artifacts
 ```
 
 
 ### Usage
 
-- **Research**: Document codebase findings in `.thoughts/research/`
+- **Research**: Save exploration findings in `.thoughts/research/`
+- **Proposals**: Record investigation findings and design decisions in `.thoughts/proposals/`
 - **Plans**: Store implementation plans in `.thoughts/plans/`
-- **Designs**: Record architectural designs in `.thoughts/designs/`
-- **Tickets**: Keep ticket context in `.thoughts/tickets/`
+- **Specs**: Maintain behavioral specs in `.thoughts/specs/`
 
 ### Conventions
 
 - The `.thoughts/` directory is gitignored
 - Use descriptive filenames: `YYYY-MM-DD-feature-name.md`
-- Research documents and design docs go in `.thoughts/research/` or `.thoughts/design/`. Implementation plans go in `.thoughts/plans/`. Never save planning artifacts in the project root or other directories unless explicitly told otherwise.
+- Proposals go in `.thoughts/proposals/`. Implementation plans go in `.thoughts/plans/`. Never save planning artifacts in the project root or other directories unless explicitly told otherwise.
 
 ### Development Pipeline
 
-See `.thoughts/PIPELINE.md` for the full workflow guide covering: Research → Design → Plan → Implement, with optional Structure and Tickets stages for complex work.
+See `.thoughts/PIPELINE.md` for the full workflow guide covering: Explore → Propose → Plan → Implement.
 
 ## Implementing Plans
 
