@@ -6,9 +6,7 @@ All pipeline artifacts live in `.thoughts/`, which is **gitignored by default**:
 .thoughts/
 ├── PIPELINE.md          # This workflow reference guide
 ├── research/            # Codebase research documents
-├── designs/             # Architectural design documents
-├── structures/          # File layout and interface documents
-├── tickets/             # Scoped work unit tickets + index
+├── proposals/           # Solution proposals with trade-off analysis
 ├── plans/               # Implementation plans with checkboxes
 ├── specs/               # Living behavioral specs for modules/domains
 ├── prs/                 # PR descriptions
@@ -36,8 +34,8 @@ draft -> active -> complete
 
 Specs are living documents that describe the **current behavior** of a module or domain -- not planned changes. They're created and updated as a byproduct of research and implementation:
 
-- `/rpi-research` can optionally create or update a spec when it documents a module's behavior comprehensively
-- `/rpi-design` can flag existing specs with `pending_changes` when a design will alter documented behavior
+- `/rpi-explore` can optionally create or update a spec when it documents a module's behavior comprehensively
+- `/rpi-propose` can flag existing specs with `pending_changes` when a proposal will alter documented behavior
 - Specs are updated to reflect reality *after* implementation, not during design
 
 This directory serves as persistent context across sessions. You can read, edit, or delete any document. Claude will check for existing documents before creating new ones to avoid duplication.
@@ -56,8 +54,8 @@ This skips adding `.thoughts/` to `.gitignore`, so all pipeline artifacts get co
 
 **Why share with the team:**
 - **Research documents** become searchable codebase documentation that stays current -- new team members can read them to understand how systems work instead of spelunking through code.
-- **Design documents** preserve decision rationale. When someone asks "why did we use Redis instead of Memcached?", the answer is in `.thoughts/designs/`, not lost in a Slack thread.
-- **Tickets and plans** give visibility into how features were decomposed and implemented, making code review easier and providing a template for similar future work.
+- **Proposal documents** preserve decision rationale. When someone asks "why did we use Redis instead of Memcached?", the answer is in `.thoughts/proposals/`, not lost in a Slack thread.
+- **Plans** give visibility into how features were decomposed and implemented, making code review easier and providing a template for similar future work.
 - **Any team member can pick up where another left off** -- if one person does the research and design, another can run `/rpi-plan` and `/rpi-implement` using those same documents.
 
 **When to keep it local:**

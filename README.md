@@ -1,15 +1,15 @@
-# AI Agent: Research-Plan-Implement Flow
+# AI Agent: Explore-Propose-Plan-Implement Flow
 
-A structured development workflow for AI coding agents that turns vague feature requests into shipped code through a pipeline of discrete, reviewable stages. Built for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but the underlying methodology -- Research -> Design -> Plan -> Implement -- works with any AI coding tool.
+A structured development workflow for AI coding agents that turns vague feature requests into shipped code through a pipeline of discrete, reviewable stages. Built for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but the underlying methodology -- Explore -> Propose -> Plan -> Implement -- works with any AI coding tool.
 
-Instead of asking an AI to "just implement it" and hoping for the best, this workflow forces deliberate progression through **Research -> Design -> Plan -> Implement** -- with optional stages for complex work. Each stage produces a document you can review, edit, and approve before moving on.
+Instead of asking an AI to "just implement it" and hoping for the best, this workflow forces deliberate progression through **Explore -> Propose -> Plan -> Implement**. Each stage produces a document you can review, edit, and approve before moving on.
 
 ```
-Research -> Design -> Plan -> Implement
+Explore -> Propose -> Plan -> Implement
    |          |        |        |
    v          v        v        v
 .thoughts/  .thoughts/ .thoughts/ code +
-research/   designs/   plans/     tests +
+research/   proposals/ plans/     tests +
                                   commits
 ```
 
@@ -32,19 +32,19 @@ research/   designs/   plans/     tests +
 
 AI coding assistants are powerful but unpredictable when given large tasks. They skip steps, make questionable architectural choices, and produce code that doesn't fit the codebase. This workflow solves that by:
 
-- **Separating thinking from doing** -- Research documents facts without opinions. Design makes decisions with trade-offs. Plans specify exact changes. Implementation follows the plan.
+- **Separating thinking from doing** -- Explore gathers facts. Propose makes decisions with trade-offs. Plan specifies exact changes. Implement executes them.
 - **Creating review checkpoints** -- You approve each stage before the next one starts. Bad decisions get caught early, not after 500 lines of wrong code.
 - **Building persistent context** -- All artifacts live in `.thoughts/`, so you and your team (or the AI) can pick up where you left off across sessions.
-- **Scaling to complexity** -- Simple bug fix? Skip straight to Plan -> Implement. Complex feature spanning multiple systems? Use the full pipeline with Tickets.
-- **Keeping the context window small** -- LLMs produce better output when focused. By breaking work into stages, each conversation stays scoped to one job (research *or* design *or* implementation) rather than cramming everything into a single bloated context. The `.thoughts/` documents carry knowledge between stages, so the AI starts each stage with exactly the context it needs -- no more, no less.
+- **Scaling to complexity** -- Simple bug fix? Skip straight to Plan -> Implement. Complex feature? Use Propose -> Plan -> Implement.
+- **Keeping the context window small** -- LLMs produce better output when focused. By breaking work into stages, each conversation stays scoped to one job (exploration *or* proposal *or* implementation) rather than cramming everything into a single bloated context. The `.thoughts/` documents carry knowledge between stages, so the AI starts each stage with exactly the context it needs -- no more, no less.
 
 ### Key Concepts
 
-- **Staged pipeline** -- Work flows through discrete stages (Research → Design → Plan → Implement), each with a clear input and output. You choose how many stages to use based on task complexity.
+- **Staged pipeline** -- Work flows through discrete stages (Explore → Propose → Plan → Implement), each with a clear input and output. You choose how many stages to use based on task complexity.
 - **`.thoughts/` as persistent context** -- All artifacts live in a local directory that survives across sessions. The AI doesn't need to re-discover your codebase every time -- it reads the documents from previous stages.
-- **Artifact chains** -- Documents link to each other through frontmatter metadata (a plan links to its design, which links to its research). The `rpi chain` command resolves these links automatically so the AI loads exactly the context it needs.
+- **Artifact chains** -- Documents link to each other through frontmatter metadata (a plan links to its proposal, which links to its research). The `rpi chain` command resolves these links automatically so the AI loads exactly the context it needs.
 - **Frontmatter-driven metadata** -- Every document carries YAML frontmatter with status, dates, tags, and cross-references. The CLI uses this for filtering, status transitions, and archive decisions -- keeping mechanical bookkeeping out of the LLM.
-- **Deterministic CLI + creative LLM** -- Mechanical operations (template scaffolding, frontmatter parsing, artifact scanning, verification checks) run in a Go binary. Creative operations (research, design decisions, code generation) stay with the LLM. Each does what it's best at.
+- **Deterministic CLI + creative LLM** -- Mechanical operations (template scaffolding, frontmatter parsing, artifact scanning, verification checks) run in a Go binary. Creative operations (exploration, design decisions, code generation) stay with the LLM. Each does what it's best at.
 
 ## Quick Start
 
@@ -77,7 +77,7 @@ AI coding assistants are powerful but unpredictable when given large tasks. They
    - `.thoughts/` -- Directory for all pipeline artifacts (gitignored by default)
    - `CLAUDE.md` -- Project-level instructions for Claude Code
 
-   Add `--track-thoughts` to commit `.thoughts/` to git so your team can share research, designs, and plans.
+   Add `--track-thoughts` to commit `.thoughts/` to git so your team can share research, proposals, and plans.
 
 4. Start Claude Code in your project and use the slash commands.
 
@@ -85,14 +85,12 @@ AI coding assistants are powerful but unpredictable when given large tasks. They
 
 | Command | What It Does | Output |
 |---------|-------------|--------|
-| `/rpi-research` | Investigates the codebase -- fact-finding with optional assessment | `.thoughts/research/YYYY-MM-DD-topic.md` |
-| `/rpi-design` | Makes architectural decisions with trade-off analysis | `.thoughts/designs/YYYY-MM-DD-topic.md` |
-| `/rpi-structure` | Defines file layout, module boundaries, interfaces | `.thoughts/structures/YYYY-MM-DD-topic.md` |
-| `/rpi-tickets` | Breaks a design into independently plannable work units | `.thoughts/tickets/prefix-NNN-name.md` |
+| `/rpi-explore` | Investigates the codebase -- conversational fact-finding | Conversation (optionally `.thoughts/research/YYYY-MM-DD-topic.md`) |
+| `/rpi-propose` | Investigates, analyzes, and proposes solutions with trade-offs | `.thoughts/proposals/YYYY-MM-DD-topic.md` |
 | `/rpi-plan` | Creates phased implementation plan with success criteria | `.thoughts/plans/YYYY-MM-DD-topic.md` |
 | `/rpi-implement` | Executes a plan phase-by-phase with verification | Code, tests, and commits |
 | `/rpi-commit` | Creates focused git commits with smart grouping | Git commits |
-| `/rpi-verify` | Validates implementation matches design artifacts | Verification report |
+| `/rpi-verify` | Validates implementation matches proposal artifacts | Verification report |
 | `/rpi-archive` | Archives completed artifacts to keep `.thoughts/` clean | Moves files to `.thoughts/archive/` |
 
 ## Choosing Your Path
@@ -100,23 +98,22 @@ AI coding assistants are powerful but unpredictable when given large tasks. They
 Not every task needs every stage. Match the path to your task's complexity:
 
 - **Small tasks** (bug fixes, config changes) -- skip straight to **Plan -> Implement**. `/rpi-plan` does lightweight research on the fly.
-- **Medium tasks** (focused features, single-concern changes) -- use the full **Research -> Design -> Plan -> Implement** pipeline.
-- **Large tasks** (multi-concern features, major refactors) -- add **Tickets** to break the design into independently plannable units: Research -> Design -> Tickets -> Plan -> Implement (per ticket).
-- **Greenfield or major reorganizations** -- add **Structure** before tickets to define file layout and interfaces upfront.
+- **Medium tasks** (focused features, single-concern changes) -- use **Propose -> Plan -> Implement**. Optionally run `/rpi-explore` first if the codebase is unfamiliar.
+- **Large tasks** (multi-concern features, major refactors) -- use **Propose -> Plan -> Implement**, where `/rpi-plan` decomposes the proposal into independently plannable units.
 
-Not sure where to start? Use `/rpi-research` with any question -- it handles both focused investigation and open-ended exploration.
+Not sure where to start? Use `/rpi-explore` with any question -- it handles both focused investigation and open-ended exploration.
 
 See the [full workflow guide](docs/workflow-guide.md) for detailed examples of each path.
 
 ## How Each Stage Works
 
-Each slash command maps to a pipeline stage with a specific purpose. Research gathers facts, Design makes decisions, Plan specifies changes, and Implement executes them. Optional stages (Structure, Tickets) add precision for complex work.
+Each slash command maps to a pipeline stage with a specific purpose. Explore gathers facts, Propose makes decisions, Plan specifies changes, and Implement executes them.
 
 See [detailed stage descriptions](docs/stages.md) for how each command works, its modes, and what it produces.
 
 ## The `.thoughts/` Directory
 
-All pipeline artifacts live in `.thoughts/`, organized by type (research, designs, plans, tickets, specs, etc.). Files follow a `YYYY-MM-DD-descriptive-name.md` naming convention and track progress through a `draft -> active -> complete` status lifecycle.
+All pipeline artifacts live in `.thoughts/`, organized by type (research, proposals, plans, specs, etc.). Files follow a `YYYY-MM-DD-descriptive-name.md` naming convention and track progress through a `draft -> active -> complete` status lifecycle.
 
 By default `.thoughts/` is gitignored, but you can share it with your team using `--track-thoughts` during init.
 
@@ -136,9 +133,9 @@ See [full `rpi init` documentation](docs/rpi-init.md) for all options and flags.
 ## Tips
 
 - **Start small.** Try `/rpi-plan` on a bug fix to see how the plan -> implement cycle feels before using the full pipeline.
-- **Edit the artifacts.** The `.thoughts/` documents are yours. If a design decision is wrong, edit it before planning. If a plan phase is unnecessary, delete it.
+- **Edit the artifacts.** The `.thoughts/` documents are yours. If a proposal decision is wrong, edit it before planning. If a plan phase is unnecessary, delete it.
 - **Use CLAUDE.md.** Add your project's test commands, linting setup, and conventions to `CLAUDE.md`. The pipeline stages pull verification commands from there.
-- **Redirect during research.** When `/rpi-research` shows initial findings, tell it to focus on specific areas rather than exploring everything.
+- **Redirect during exploration.** When `/rpi-explore` shows initial findings, tell it to focus on specific areas rather than exploring everything.
 - **Skip stages when they don't add value.** The full pipeline exists for complex work. Most daily tasks only need Plan -> Implement.
 - **Review the pre-review.** `/rpi-implement` shows you exactly what it plans to change before writing code. This is your last checkpoint -- use it.
 
@@ -153,7 +150,7 @@ The `rpi` CLI exists to keep mechanical work out of the LLM's context window. Ev
 The binary handles operations that are **deterministic and error-prone for LLMs**:
 
 - **Template scaffolding** -- `rpi scaffold` generates documents with correct frontmatter, dates, and file paths. An LLM asked to do this will occasionally hallucinate fields or misformat dates.
-- **Artifact chain resolution** -- `rpi chain` follows frontmatter links recursively (plan → design → research) and returns a flat list of files to load. This is a mechanical graph traversal, not a creative task.
+- **Artifact chain resolution** -- `rpi chain` follows frontmatter links recursively (plan → proposal → research) and returns a flat list of files to load. This is a mechanical graph traversal, not a creative task.
 - **Frontmatter manipulation** -- `rpi frontmatter` reads, writes, and validates status transitions. YAML parsing in natural language is fragile; a CLI does it reliably every time.
 - **Directory scanning and filtering** -- `rpi scan` walks `.thoughts/`, parses metadata, and filters by status/type. Fast and deterministic vs. asking the LLM to shell out and parse results.
 - **Verification checks** -- `rpi verify` counts checkboxes, checks file coverage against git changes, and scans for TODO markers. Mechanical validation that should never consume context tokens.
@@ -178,7 +175,7 @@ Every stage produces a document you can read, edit, reject, or share with your t
 ├── internal/
 |   ├── workflow/assets/                  # All embedded assets (installed by rpi init)
 |   |   ├── agents/                       # Agent definitions
-|   |   ├── commands/                     # Slash command definitions (rpi-plan, rpi-research, etc.)
+|   |   ├── commands/                     # Slash command definitions (rpi-plan, rpi-explore, rpi-propose, etc.)
 |   |   ├── skills/                       # Skill definitions (find-patterns, locate-codebase, etc.)
 |   |   └── templates/                    # Scaffold + document templates (.tmpl, .template)
 |   └── templates/                        # Template resolution with user-override support
