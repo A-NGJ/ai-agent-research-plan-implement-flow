@@ -1,11 +1,11 @@
 ---
-description: Verify implementation against design artifacts for completeness, correctness, and coherence
+description: Verify implementation against proposal artifacts for completeness, correctness, and coherence
 model: opus
 ---
 
 # Verify Implementation
 
-Validate that an implementation matches its design artifacts across three dimensions: completeness, correctness, and coherence. Produces a severity-classified verification report.
+Validate that an implementation matches its proposal artifacts across three dimensions: completeness, correctness, and coherence. Produces a severity-classified verification report.
 
 This command is purely advisory — it does not block anything. It can be re-run after fixes to confirm resolution.
 
@@ -13,7 +13,7 @@ This command is purely advisory — it does not block anything. It can be re-run
 
 ## Step 1: Receive the input
 
-If the user provided a path to a design doc, plan, or ticket as command arguments, proceed to Step 3.
+If the user provided a path to a proposal, plan, or other artifact as command arguments, proceed to Step 3.
 
 If no arguments were provided, proceed to Step 2 (auto-detection).
 
@@ -24,7 +24,7 @@ When no path is provided, detect from recent git changes:
 1. Run in parallel:
    - `rpi git-context changed-files` — files changed on the current branch (falls back to last 5 commits if on main)
    - `rpi scan --status active --type plan` — find active plans
-   - `rpi scan --status active --type design` — find active designs
+   - `rpi scan --status active --type proposal` — find active proposals
 2. If artifacts found, announce:
    ```
    Found active plan at [path] — verifying against it.
@@ -32,12 +32,11 @@ When no path is provided, detect from recent git changes:
    Then proceed to Step 3 with the discovered path(s).
 3. If nothing found, ask:
    ```
-   I couldn't detect an active plan or design from recent git changes.
+   I couldn't detect an active plan or proposal from recent git changes.
 
    What would you like me to verify? Provide a path to:
    - A plan: `.thoughts/plans/YYYY-MM-DD-description.md`
-   - A design: `.thoughts/designs/YYYY-MM-DD-description.md`
-   - A ticket: `.thoughts/tickets/ticket-id.md`
+   - A proposal: `.thoughts/proposals/YYYY-MM-DD-description.md`
    ```
 
 ## Step 3: Read referenced artifacts
@@ -46,7 +45,7 @@ Read the provided or detected artifact(s) fully. Then resolve the artifact chain
 
 Run: `rpi chain <artifact-path>`
 
-This returns the full chain (plan → design → ticket → research) with metadata. Read the files it identifies.
+This returns the full chain (plan → proposal → research) with metadata. Read the files it identifies.
 
 Also check:
 - `.thoughts/specs/` — if this directory exists, read any specs relevant to the changed domain areas
@@ -57,8 +56,7 @@ Present a summary before proceeding:
 ```
 Verifying against:
 - Plan: [path] (if found)
-- Design: [path] (if found)
-- Ticket: [path] (if found)
+- Proposal: [path] (if found)
 - Specs: [paths] (if found)
 
 Changed files: [N files from git diff]
@@ -101,16 +99,16 @@ Check whether everything that was planned has been done.
 
 Check whether the implementation matches the design intent.
 
-- Sub-task: "Verify correctness of the implementation against the design. You are checking whether what was built matches what was specified.
+- Sub-task: "Verify correctness of the implementation against the proposal. You are checking whether what was built matches what was specified.
 
   Context:
-  - [Include the design doc content, plan content, specs content if available, and list of changed files]
+  - [Include the proposal content, plan content, specs content if available, and list of changed files]
 
   Check each of these:
-  1. **Approach alignment**: Does the implementation follow the chosen approach from the design doc? Read the key implementation files and compare against design decisions.
-  2. **API contracts**: If the design specifies interfaces, APIs, or data contracts, verify the implementation matches. Check function signatures, data shapes, and endpoint definitions.
-  3. **Edge cases**: Were edge cases identified in the design actually handled in code? Read the relevant code sections to verify.
-  4. **Silent deviations**: Are there files changed that weren't in the plan? Are there approaches that differ from what was designed? Flag any undocumented divergence.
+  1. **Approach alignment**: Does the implementation follow the chosen approach from the proposal? Read the key implementation files and compare against proposal decisions.
+  2. **API contracts**: If the proposal specifies interfaces, APIs, or data contracts, verify the implementation matches. Check function signatures, data shapes, and endpoint definitions.
+  3. **Edge cases**: Were edge cases identified in the proposal actually handled in code? Read the relevant code sections to verify.
+  4. **Silent deviations**: Are there files changed that weren't in the plan? Are there approaches that differ from what was proposed? Flag any undocumented divergence.
   5. **Spec consistency**: If `.thoughts/specs/` files were provided, verify the implementation is consistent with the behavioral specs described there.
 
   For each item, report:

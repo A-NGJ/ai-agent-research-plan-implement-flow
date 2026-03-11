@@ -47,8 +47,8 @@ Research (2):
 Plans (1):
 - .thoughts/plans/2026-02-10-add-rate-limiting.md (complete, all phases done)
 
-Designs (1):
-- .thoughts/designs/2026-01-20-caching-strategy.md (superseded by .thoughts/designs/2026-03-01-caching-v2.md)
+Proposals (1):
+- .thoughts/proposals/2026-01-20-caching-strategy.md (superseded by .thoughts/proposals/2026-03-01-caching-v2.md)
 
 Which would you like to archive? (all / specific items / none)
 ```
@@ -82,7 +82,7 @@ For each artifact about to be archived:
    Cross-reference warning:
 
    .thoughts/research/2026-01-15-auth-flow.md is referenced by:
-   - .thoughts/designs/2026-02-15-auth-redesign.md (line 12)
+   - .thoughts/proposals/2026-02-15-auth-redesign.md (line 12)
    - .thoughts/plans/2026-02-20-auth-plan.md (line 8)
 
    These references will become stale after archiving.

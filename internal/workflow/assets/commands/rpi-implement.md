@@ -10,8 +10,8 @@ You are tasked with implementing an approved technical plan from `.thoughts/plan
 **Prerequisite**: The `rpi` binary must be available in PATH. If not found, run `go build -o bin/rpi ./cmd/rpi` or `make install`.
 
 Plans come in two forms:
-- **Pipeline plans**: Reference design docs (`.thoughts/designs/`) and optionally structure docs (`.thoughts/structures/`). Read these when you need deeper context.
-- **Standalone plans**: Self-contained with all context inline (no design docs). These are typically for simpler tasks.
+- **Pipeline plans**: Reference proposals (`.thoughts/proposals/`) and optionally research docs. Read these when you need deeper context.
+- **Standalone plans**: Self-contained with all context inline (no proposals). These are typically for simpler tasks.
 
 ## Getting Started
 
@@ -19,7 +19,7 @@ When given a plan path:
 
 - Read the plan completely and check for any existing checkmarks (- [x])
 - Resolve the artifact chain: run `rpi chain <plan-path>`
-  This returns linked design docs, tickets, research docs. Read the files it identifies.
+  This returns linked proposals, research docs. Read the files it identifies.
 - Read all files mentioned in the plan
 - **Read files fully** - never use limit/offset parameters, you need complete context
 - Think deeply about how the pieces fit together
@@ -40,14 +40,11 @@ Plans are carefully designed, but reality can be messy. Your job is to:
 - Verify your work makes sense in the broader codebase context
 - Update checkboxes in the plan as you complete sections
 - Commit changes after each phase (after automated and manual testing have passed)
+  - **Before staging**: run `rpi git-context sensitive-check` — if it flags any files, warn the user and exclude them from the commit
   - List the files you plan to add for each commit
   - Show the commit message(s) you'll use. Try to keep them concise yet descriptive.
   - Ask: "I plan to create [N] commit(s) with these changes. Shall I proceed?"
-  - **NEVER add co-author information or Claude attribution**
-  - Commits should be authored solely by the user
-  - Do not include any "Generated with Claude" messages
-  - Do not add "Co-Authored-By" lines
-  - Write commit messages as if the user wrote them
+  - **After hook failure**: read the error output, fix the issue, re-stage, and create a **new** commit (never use `--amend`)
 - Wait for user manual input after each phase before proceeding
 
 When things don't match the plan exactly, think about why and communicate clearly. The plan is your guide, but your judgment matters too.
@@ -152,5 +149,11 @@ Remember: You're implementing a solution, not just checking boxes. Keep the end 
 
 When all phases are done and verified:
 
-- Update the plan status: run `rpi frontmatter transition <plan> complete`
-- Announce: "All phases complete. Plan status updated to `complete`."
+1. **Update specs** — check `.thoughts/specs/` for specs affected by this implementation:
+   - Review specs against the actual implementation
+   - If behavior diverged from what was spec'd (scope changes, discoveries during implementation): update specs to match final behavior
+   - Present spec updates → human checkpoint: "Updated specs to reflect final behavior — accurate?"
+   - Skip this step if no relevant specs exist
+
+2. **Update the plan status**: run `rpi frontmatter transition <plan> complete`
+3. **Announce**: "All phases complete. Plan status updated to `complete`."

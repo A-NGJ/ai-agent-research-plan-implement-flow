@@ -1,5 +1,5 @@
 ---
-description: Create implementation plans — works standalone for simple tasks or with prior design docs for complex ones
+description: Create implementation plans — works standalone for simple tasks or with prior proposals for complex ones
 model: opus
 ---
 
@@ -11,18 +11,15 @@ Create implementation plans with phased tasks, success criteria, and verificatio
 
 **Two modes — auto-detected from input:**
 
-- **Standalone mode**: For simple/short tasks. You describe what needs to be done, the plan does its own lightweight research and produces a plan directly. No prior `/rpi-research` or `/rpi-design` needed.
-- **Pipeline mode**: For complex tasks with existing docs. You provide a design document, structure document, or a **ticket from `/rpi-tickets`** that links back to the pipeline (research → design → [structure] → tickets → plan → implement).
+- **Standalone mode**: For simple/short tasks. You describe what needs to be done, the plan does its own lightweight research and produces a plan directly. No prior `/rpi-propose` needed.
+- **Pipeline mode**: For complex tasks with existing docs. You provide a proposal document from `/rpi-propose` that links back to the pipeline (explore → propose → plan → implement).
 
 ## Initial Response
 
 When this command is invoked:
 
 1. **Check what was provided:**
-   - If a path to a design document (or structure document) was provided → **Pipeline mode**
-   - If a path to a ticket file was provided → read its frontmatter:
-     - If the ticket has a `design:` field (it came from `/rpi-tickets`) → **Pipeline mode** (ticket-originated)
-     - If the ticket has no `design:` field (standalone ticket) → **Standalone mode**
+   - If a path to a proposal document was provided → **Pipeline mode**
    - If a plain task description was provided → **Standalone mode**
    - If nothing was provided, respond:
    ```
@@ -33,16 +30,15 @@ When this command is invoked:
    **Simple task** (standalone):
    `/rpi-plan Add a retry mechanism to the webhook handler`
 
-   **From the pipeline** (with prior docs):
-   `/rpi-plan .thoughts/designs/2025-01-08-feature-name.md`
-   `/rpi-plan .thoughts/tickets/auth-001-user-signup.md`
+   **From the pipeline** (with prior proposal):
+   `/rpi-plan .thoughts/proposals/2026-03-10-feature-name.md`
    ```
 
 ---
 
 ## Standalone Mode
 
-For tasks that don't need a full research -> design -> structure pipeline. Typically: bug fixes, small features, refactors, config changes, adding tests, etc.
+For tasks that don't need a full propose → plan pipeline. Typically: bug fixes, small features, refactors, config changes, adding tests, etc.
 
 ### Step 1: Understand the Task
 
@@ -111,7 +107,7 @@ When revising based on feedback:
 
 ## Pipeline Mode
 
-For complex tasks that already went through the pipeline. Triggered by design docs, structure docs, or **ticket files from `/rpi-tickets`** that link back to design docs.
+For complex tasks that already went through the pipeline. Triggered by proposal documents from `/rpi-propose`.
 
 ### Step 1: Read Inputs & Validate
 
@@ -121,64 +117,87 @@ For complex tasks that already went through the pipeline. Triggered by design do
 
    Run: `rpi chain <input-path>`
 
-   This recursively follows frontmatter links (ticket → design → research, or design → research) and returns the full artifact chain with metadata. Read all the files it identifies.
-
-   **If given a ticket file** — the ticket's **Scope**, **Design Context**, and **Acceptance Criteria** sections define the boundaries for this plan. The design doc provides broader context, but the ticket scopes what this specific plan covers.
-
-   **If given a design or structure doc** — also check for related tickets:
-   Run: `rpi scan --type ticket --design <path>`
+   This recursively follows frontmatter links (proposal → research) and returns the full artifact chain with metadata. Read all the files it identifies.
 
    **IMPORTANT**: Read entire files — no limit/offset
    **CRITICAL**: Read these yourself before spawning sub-tasks
 
-3. **Extract the ticket ID for naming** — if the input is a ticket file, or if any source document references a ticket, note the `ticket:` field value (e.g., `auth-001`). This will be used in the plan filename.
+3. **Read relevant specs** — check `.thoughts/specs/` for specs covering modules affected by this proposal. Specs inform phase design and success criteria ("behavior should match spec X").
 
-4. **Spot-check critical files from the design doc** (or structure doc if available):
+4. **Spot-check critical files from the proposal**:
    - Read 3-5 of the most important files mentioned
-   - Verify the codebase still matches what the docs describe
+   - Verify the codebase still matches what the proposal describes
    - If anything has drifted significantly, flag it immediately
 
 5. **Present validation results**:
    ```
    I've read the pipeline docs:
-   - Ticket: [path] — [ticket ID]: [title] (if ticket-originated)
-   - Research: [path] — [topic summary]
-   - Design: [path] — [key decisions: A, B, C]
-   - Structure: [path] — [scope summary] (if available)
+   - Proposal: [path] — [key decisions: A, B, C]
+   - Research: [path] — [topic summary] (if linked)
+   - Specs: [paths] (if relevant)
 
    Validation against current codebase:
    - [file:line] — confirmed, matches docs
    - [file:line] — DRIFT DETECTED: [explanation]
 
-   Questions before I define phases:
-   - [Phasing/ordering questions only — design decisions are already made]
+   Questions before I assess scope:
+   - [Scoping/phasing questions only — design decisions are already made]
    ```
 
-### Step 2: Phase Definition
+### Step 2: Scope Assessment & Decomposition
+
+Before defining phases, assess whether the proposal fits in a single plan:
+
+1. **Assess scope:**
+   - **Single concern, ≤4 phases** → proceed to Phase Definition (single plan)
+   - **Multiple concerns or >4 phases** → decomposition path
+
+2. **If decomposing**, propose work units with scope, files, and dependencies:
+   ```
+   This proposal covers multiple concerns. I'd break it into separate plans:
+
+   1. **[Unit title]** — [scope description]
+      Files: [key files]
+      Depends on: nothing (foundation)
+
+   2. **[Unit title]** — [scope description]
+      Files: [key files]
+      Depends on: #1
+
+   Recommended implementation order: #1 → #2 → #3
+
+   Shall I write individual plan files for each?
+   ```
+
+   After approval, write individual plan files per unit using `rpi scaffold plan --proposal <path> --topic "..." --write`, then present the recommended starting point: `/rpi-implement .thoughts/plans/YYYY-MM-DD-unit-1.md`
+
+   **Stop here if decomposing** — each unit gets its own plan invocation.
+
+### Step 3: Phase Definition
 
 1. **Create a planning todo list** using TodoWrite
-2. **Break the design's changes into ordered phases:**
+2. **Break the proposal's changes into ordered phases:**
    - Group related changes that must ship together
    - Respect dependency order (data model -> business logic -> API -> UI)
    - Each phase should leave the codebase in a working, testable state
    - Include tests in the same phase as the code they test — do not put tests in a separate phase or bottom section
-   - If a structure doc is available, use its file listings; otherwise, identify files from the design doc's architecture/integration sections
+   - Identify files from the proposal's architecture/file structure sections
 3. **Present proposed phases for buy-in:**
    ```
    Proposed phases:
 
    ## Phase 1: [Name] — [what it accomplishes]
-   Files: [list from design/structure doc]
+   Files: [list from proposal]
    Depends on: nothing (foundation)
 
    ## Phase 2: [Name] — [what it accomplishes]
-   Files: [list from design/structure doc]
+   Files: [list from proposal]
    Depends on: Phase 1
 
    Does this phasing make sense?
    ```
 
-### Step 3: Success Criteria & Verification
+### Step 4: Success Criteria & Verification
 
 After phase buy-in:
 
@@ -188,27 +207,26 @@ After phase buy-in:
 2. **Define commit strategy per phase**
 3. **Present for review**
 
-### Step 4: Write the Plan
+### Step 5: Write the Plan
 
 **Create the plan file**:
-- Without ticket ID: `rpi scaffold plan --topic "..." --write`
-- With ticket ID: `rpi scaffold plan --ticket <id> --design <path> --topic "..." --write`
+- `rpi scaffold plan --proposal <path> --topic "..." --write`
 
-This creates the file at `.thoughts/plans/YYYY-MM-DD-[ticket-id-]description.md` with frontmatter pre-populated.
+This creates the file at `.thoughts/plans/YYYY-MM-DD-description.md` with frontmatter pre-populated.
 
 **Fill in the plan content**: source documents section, phases (tasks, code snippets, success criteria, commit steps), migration notes if applicable, and references. Each phase should include:
 - Overview (what it accomplishes and why it comes first / dependencies on prior phases)
-- Tasks with file paths and change descriptions (include key code snippets, reference design doc for interface details)
+- Tasks with file paths and change descriptions (include key code snippets, reference proposal for interface details)
 - Tests in the same phase as the code they test
 - Success criteria split into automated and manual verification
 - Commit step (stage list + message)
 - "Pause for manual confirmation" note between phases
 
-### Step 5: Review & Iterate
+### Step 6: Review & Iterate
 
 Present the plan with a brief summary:
 ```
-Plan saved: `.thoughts/plans/YYYY-MM-DD-<ticket-id>-description.md`
+Plan saved: `.thoughts/plans/YYYY-MM-DD-description.md`
 
 Phases:
 - Phase 1: [name] — [what it does] ([N files])
@@ -222,7 +240,6 @@ When revising based on feedback:
 - **Scope change** (add/remove tasks): update the Scope line and affected phase tasks
 - **Approach change**: re-research if needed — say so rather than guessing
 - Keep iterating until the user confirms or stops giving feedback
-- If the user confirms that the plan looks good, load `/rpi-implement` to start implementation based on the plan.
 
 ---
 
@@ -237,5 +254,6 @@ When revising based on feedback:
 7. **Tests Belong to Their Phase**: Write tests alongside the code they cover, not in a separate section at the bottom
 
 ### Pipeline Mode Only
-8. **Trust Prior Stages**: Don't redo research or design work — reference those docs
-9. **Spot-check Reality**: Verify the codebase still matches the design doc before planning
+8. **Trust Prior Stages**: Don't redo research or proposal work — reference those docs
+9. **Spot-check Reality**: Verify the codebase still matches the proposal before planning
+- If the user confirms that the plan looks good, load `/rpi-implement` to start implementation based on the plan.
