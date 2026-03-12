@@ -21,6 +21,7 @@ research/   proposals/ plans/     tests +
 - [How Each Stage Works](#how-each-stage-works)
 - [The `.thoughts/` Directory](#the-thoughts-directory)
 - [The `rpi init` Command](#the-rpi-init-command)
+- [Shell Completion](#shell-completion)
 - [Tips](#tips)
 - [Using with Other AI Coding Tools](#using-with-other-ai-coding-tools)
 - [Why a Go Binary](#why-a-go-binary)
@@ -129,6 +130,23 @@ rpi init --track-thoughts                      # Share .thoughts/ via git
 ```
 
 See [full `rpi init` documentation](docs/rpi-init.md) for all options and flags.
+
+## Shell Completion
+
+The `rpi` binary supports autocompletion for bash, zsh, fish, and powershell. Add one of the following lines to your shell configuration file to enable completions for every new session:
+
+```bash
+# Bash (~/.bashrc)
+source <(rpi completion bash)
+
+# Zsh (~/.zshrc)
+source <(rpi completion zsh)
+
+# Fish (~/.config/fish/config.fish)
+rpi completion fish | source
+```
+
+Run `rpi completion <shell> --help` for more options.
 
 ## Tips
 
