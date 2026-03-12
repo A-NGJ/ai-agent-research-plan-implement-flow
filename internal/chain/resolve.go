@@ -20,14 +20,20 @@ var listLinkFields = []string{"depends_on"}
 // thoughtsPathRe matches .thoughts/ paths in markdown content (relative or absolute).
 var thoughtsPathRe = regexp.MustCompile(`[^\s\(\[` + "`" + `"']*\.thoughts/[^\s\)\]` + "`" + `"']+\.md`)
 
+// ResolveOptions controls optional behavior during chain resolution.
+type ResolveOptions struct {
+	Sections []string
+}
+
 // Artifact represents metadata about a single .thoughts/ file in a chain.
 type Artifact struct {
-	Path     string   `json:"path"`
-	Type     string   `json:"type"`
-	Status   *string  `json:"status"`
-	Title    *string  `json:"title"`
-	TicketID *string  `json:"ticket_id,omitempty"`
-	LinksTo  []string `json:"links_to"`
+	Path     string            `json:"path"`
+	Type     string            `json:"type"`
+	Status   *string           `json:"status"`
+	Title    *string           `json:"title"`
+	TicketID *string           `json:"ticket_id,omitempty"`
+	LinksTo  []string          `json:"links_to"`
+	Sections map[string]string `json:"sections,omitempty"`
 }
 
 // Result is the output of a chain resolution.
@@ -38,20 +44,20 @@ type Result struct {
 }
 
 // Resolve follows frontmatter links from the given root file recursively.
-func Resolve(rootPath string) (*Result, error) {
+func Resolve(rootPath string, opts ResolveOptions) (*Result, error) {
 	result := &Result{
 		Root:      rootPath,
 		Artifacts: []Artifact{},
 	}
 
 	visited := make(map[string]bool)
-	if err := resolve(rootPath, 0, visited, result); err != nil {
+	if err := resolve(rootPath, 0, visited, result, opts); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func resolve(path string, depth int, visited map[string]bool, result *Result) error {
+func resolve(path string, depth int, visited map[string]bool, result *Result, opts ResolveOptions) error {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return fmt.Errorf("resolve path %s: %w", path, err)
@@ -75,10 +81,15 @@ func resolve(path string, depth int, visited map[string]bool, result *Result) er
 
 	links := extractLinks(doc)
 	artifact := buildArtifact(doc, path, links)
+
+	if len(opts.Sections) > 0 {
+		artifact.Sections = frontmatter.ExtractSections(doc.Body, opts.Sections)
+	}
+
 	result.Artifacts = append(result.Artifacts, artifact)
 
 	for _, link := range links {
-		if err := resolve(link, depth+1, visited, result); err != nil {
+		if err := resolve(link, depth+1, visited, result, opts); err != nil {
 			return err
 		}
 	}

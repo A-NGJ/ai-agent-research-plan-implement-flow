@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var sectionsFlag string
+
 var chainCmd = &cobra.Command{
 	Use:   "chain <artifact-path>",
 	Short: "Resolve artifact cross-reference chain",
@@ -20,11 +22,21 @@ var chainCmd = &cobra.Command{
 
 func init() {
 	addFormatFlag(chainCmd)
+	chainCmd.Flags().StringVar(&sectionsFlag, "sections", "", "Comma-separated section names to extract from each artifact")
 	rootCmd.AddCommand(chainCmd)
 }
 
 func runChain(cmd *cobra.Command, args []string) error {
-	result, err := chain.Resolve(args[0])
+	opts := chain.ResolveOptions{}
+	if sectionsFlag != "" {
+		parts := strings.Split(sectionsFlag, ",")
+		for i, p := range parts {
+			parts[i] = strings.TrimSpace(p)
+		}
+		opts.Sections = parts
+	}
+
+	result, err := chain.Resolve(args[0], opts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
@@ -67,5 +79,15 @@ func printChainTable(result *chain.Result) {
 		}
 		path := fmt.Sprintf("`%s`", a.Path)
 		fmt.Printf("| %s | %s | %s | %s |\n", path, a.Type, status, strings.ReplaceAll(title, "|", "\\|"))
+	}
+
+	// Print sections if any artifact has them
+	for _, a := range result.Artifacts {
+		if len(a.Sections) > 0 {
+			fmt.Printf("\n---\n\n### `%s`\n\n", a.Path)
+			for _, content := range a.Sections {
+				fmt.Println(content)
+			}
+		}
 	}
 }

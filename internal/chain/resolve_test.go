@@ -31,7 +31,7 @@ func TestResolveSimpleChain(t *testing.T) {
 	planPath := writeFile(t, dir, ".thoughts/plans/test-plan.md",
 		"---\ntopic: \"Test Plan\"\nstatus: draft\nproposal: "+proposalPath+"\n---\n# Plan\n")
 
-	result, err := Resolve(planPath)
+	result, err := Resolve(planPath, ResolveOptions{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -65,7 +65,7 @@ func TestResolveCycleDetection(t *testing.T) {
 	writeFile(t, dir, ".thoughts/proposals/b.md",
 		"---\ntopic: B\nstatus: draft\nproposal: "+aPath+"\n---\n# B\n")
 
-	result, err := Resolve(aPath)
+	result, err := Resolve(aPath, ResolveOptions{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -81,7 +81,7 @@ func TestResolveMissingFile(t *testing.T) {
 	planPath := writeFile(t, dir, ".thoughts/plans/p.md",
 		"---\ntopic: P\nstatus: draft\nproposal: /nonexistent/proposal.md\n---\n# P\n")
 
-	result, err := Resolve(planPath)
+	result, err := Resolve(planPath, ResolveOptions{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestResolveNoFrontmatterFallback(t *testing.T) {
 	planPath := writeFile(t, dir, ".thoughts/plans/plan.md",
 		"# Plan\n\n## Source Documents\n- Proposal: `"+proposalPath+"`\n- Research: `.thoughts/research/r.md`\n")
 
-	result, err := Resolve(planPath)
+	result, err := Resolve(planPath, ResolveOptions{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestResolveSingleFile(t *testing.T) {
 	path := writeFile(t, dir, ".thoughts/proposals/solo.md",
 		"---\ntopic: Solo\nstatus: draft\n---\n# Solo\n")
 
-	result, err := Resolve(path)
+	result, err := Resolve(path, ResolveOptions{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestResolveDependsOnList(t *testing.T) {
 	mainPath := writeFile(t, dir, ".thoughts/plans/main.md",
 		"---\ntopic: Main\nstatus: draft\ndepends_on:\n  - "+dep1+"\n  - "+dep2+"\n---\n# Main\n")
 
-	result, err := Resolve(mainPath)
+	result, err := Resolve(mainPath, ResolveOptions{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -175,7 +175,7 @@ func TestResolveMaxDepth(t *testing.T) {
 			"---\ntopic: P"+fmt.Sprintf("%d", i)+"\nstatus: draft\n"+link+"---\n# P\n")
 	}
 
-	result, err := Resolve(paths[0])
+	result, err := Resolve(paths[0], ResolveOptions{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -186,6 +186,62 @@ func TestResolveMaxDepth(t *testing.T) {
 	}
 	if len(result.Warnings) == 0 {
 		t.Error("expected max depth warning")
+	}
+}
+
+func TestResolveSectionsExtraction(t *testing.T) {
+	dir := t.TempDir()
+
+	path := writeFile(t, dir, ".thoughts/proposals/proposal.md",
+		"---\ntopic: My Proposal\nstatus: complete\n---\n# Proposal\n\n## Summary\n\nThis is the summary.\n\n## Architecture\n\nDiagram here.\n")
+
+	result, err := Resolve(path, ResolveOptions{Sections: []string{"Summary"}})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Artifacts) != 1 {
+		t.Fatalf("got %d artifacts, want 1", len(result.Artifacts))
+	}
+
+	sections := result.Artifacts[0].Sections
+	if sections == nil {
+		t.Fatal("expected sections to be populated")
+	}
+	if _, ok := sections["## Summary"]; !ok {
+		t.Errorf("expected '## Summary' key in sections, got keys: %v", sections)
+	}
+}
+
+func TestResolveSectionsEmptyOptions(t *testing.T) {
+	dir := t.TempDir()
+
+	path := writeFile(t, dir, ".thoughts/proposals/proposal.md",
+		"---\ntopic: My Proposal\nstatus: complete\n---\n# Proposal\n\n## Summary\n\nContent.\n")
+
+	result, err := Resolve(path, ResolveOptions{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Artifacts[0].Sections != nil {
+		t.Errorf("expected nil sections with empty options, got %v", result.Artifacts[0].Sections)
+	}
+}
+
+func TestResolveSectionsNoMatch(t *testing.T) {
+	dir := t.TempDir()
+
+	path := writeFile(t, dir, ".thoughts/proposals/proposal.md",
+		"---\ntopic: My Proposal\nstatus: complete\n---\n# Proposal\n\n## Summary\n\nContent.\n")
+
+	result, err := Resolve(path, ResolveOptions{Sections: []string{"Nonexistent"}})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Artifacts[0].Sections != nil {
+		t.Errorf("expected nil sections when no match, got %v", result.Artifacts[0].Sections)
 	}
 }
 
