@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/A-NGJ/ai-agent-research-plan-implement-flow/internal/index"
 	"github.com/A-NGJ/ai-agent-research-plan-implement-flow/internal/templates"
 	"github.com/A-NGJ/ai-agent-research-plan-implement-flow/internal/workflow"
 	"github.com/spf13/cobra"
@@ -142,6 +143,30 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("install workflow files: %w", err)
 	}
 	logSuccess(w, fmt.Sprintf("Installed %d workflow files (agents, commands, skills)", n))
+
+	// Add .rpi/ to .gitignore
+	if err := ensureGitignoreEntry(w, targetDir, ".rpi/"); err != nil {
+		logWarning(w, fmt.Sprintf("Failed to update .gitignore: %v", err))
+	}
+
+	// Build codebase index
+	logInfo(w, "Building codebase index...")
+	idx, err := index.Build(targetDir, index.BuildOptions{})
+	if err != nil {
+		logWarning(w, fmt.Sprintf("Index build failed: %v", err))
+	} else {
+		rpiDir := filepath.Join(targetDir, ".rpi")
+		if mkErr := os.MkdirAll(rpiDir, 0755); mkErr != nil {
+			logWarning(w, fmt.Sprintf("Create .rpi/ failed: %v", mkErr))
+		} else {
+			indexPath := filepath.Join(rpiDir, "index.json")
+			if saveErr := index.Save(idx, indexPath); saveErr != nil {
+				logWarning(w, fmt.Sprintf("Index save failed: %v", saveErr))
+			} else {
+				logSuccess(w, fmt.Sprintf("Built codebase index (%d files, %d symbols)", idx.Metadata.FileCount, idx.Metadata.SymbolCount))
+			}
+		}
+	}
 
 	return nil
 }

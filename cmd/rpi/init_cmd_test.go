@@ -399,6 +399,63 @@ func TestInitDoesNotOverwriteWithoutForce(t *testing.T) {
 	}
 }
 
+func TestInitAddsRpiToGitignore(t *testing.T) {
+	dir := t.TempDir()
+
+	_, err := runInitInDir(t, dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(dir, ".gitignore"))
+	if err != nil {
+		t.Fatalf("failed to read .gitignore: %v", err)
+	}
+
+	if !strings.Contains(string(data), ".rpi/") {
+		t.Error(".gitignore missing .rpi/ entry")
+	}
+}
+
+func TestInitBuildsIndex(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create a Go source file so the index has something to find.
+	os.MkdirAll(filepath.Join(dir, "pkg"), 0755)
+	os.WriteFile(filepath.Join(dir, "pkg", "main.go"), []byte("package main\n\nfunc main() {}\n"), 0644)
+
+	buf, err := runInitInDir(t, dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify index file was created.
+	indexPath := filepath.Join(dir, ".rpi", "index.json")
+	if _, err := os.Stat(indexPath); err != nil {
+		t.Errorf("index file not created: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "Built codebase index") {
+		t.Errorf("output missing index build message, got: %s", output)
+	}
+}
+
+func TestInitSucceedsWithEmptyDir(t *testing.T) {
+	dir := t.TempDir()
+
+	buf, err := runInitInDir(t, dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Init should succeed even with no source files (0 files, 0 symbols).
+	output := buf.String()
+	if !strings.Contains(output, "Built codebase index (0 files, 0 symbols)") {
+		t.Errorf("expected empty index message, got: %s", output)
+	}
+}
+
 func TestCopyDirectory(t *testing.T) {
 	src := t.TempDir()
 	dest := filepath.Join(t.TempDir(), "dest")

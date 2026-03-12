@@ -11,6 +11,16 @@ Find existing code patterns in the codebase so you (or the user) can model new c
 
 The key insight: effective pattern finding is iterative. Start broad, then narrow based on what you find. Don't try to guess the right search terms upfront — let the codebase teach you its vocabulary.
 
+### Phase 0: Check Index (optional fast path)
+
+Run: `rpi index status`
+If index exists and is fresh:
+  Run: `rpi index query "[pattern-topic]" --format json`
+  Use results to skip Phase 1 (Orientation) and most of Phase 2 (Search).
+  Go directly to reading representative files (Phase 2 step 3).
+If no index:
+  Proceed with Phase 1 as normal.
+
 ### Phase 1: Orientation
 
 Before searching for code, understand what the user is actually looking for. "How are API endpoints structured?" might mean route registration, request validation, response formatting, or all of the above. When in doubt, cover all aspects — it's better to show too much context than too little.
