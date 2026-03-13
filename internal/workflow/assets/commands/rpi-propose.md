@@ -10,6 +10,7 @@ Investigate the codebase, analyze trade-offs, and produce a proposal document th
 This is part of the pipeline: **research → propose → plan → implement**. Propose is where the hard choices happen — understanding the terrain, weighing options, and committing to an approach. The output is a proposal document that Plan consumes directly.
 
 **Prerequisite**: The `rpi` binary must be available in PATH. If not found, run `go build -o bin/rpi ./cmd/rpi` or `make install`.
+Run `rpi --help` to discover available commands and `rpi <command> --help` for detailed usage with examples.
 
 ## Initial Response
 
@@ -83,18 +84,18 @@ Present options with concrete trade-offs:
 
 After the user confirms direction:
 
-Run: `rpi scaffold propose --topic "..." --write`
+Use `rpi` to scaffold and save a proposal artifact for this topic.
 
 This creates `.thoughts/proposals/YYYY-MM-DD-description.md` with frontmatter pre-populated.
 
 Fill in the sections — for Quick mode, focus on: Summary, Constraints & Requirements, Design Decisions (often just one), References. Skip sections that don't apply (Architecture, File Structure, etc.).
 
-**Mark proposal as active**: `rpi frontmatter transition <proposal-path> active`
+**Mark proposal as active**: Use `rpi` to transition the proposal to active status.
 
 **Transition upstream artifacts**: If this proposal was created from a research doc:
 1. Re-read the research doc's key findings, suggested next steps, and open questions
 2. Verify the proposal addresses them — check each finding was incorporated or explicitly scoped out, each question was answered or deferred with rationale
-3. If all points are covered: `rpi frontmatter transition <research-path> complete`
+3. If all points are covered, use `rpi` to transition the research artifact to complete
 4. If gaps remain, note them:
    ```
    Research doc has unaddressed items:
@@ -109,8 +110,7 @@ Fill in the sections — for Quick mode, focus on: Summary, Constraints & Requir
 
 1. Check `.thoughts/specs/` for specs covering affected modules
 2. If specs exist: review for accuracy against investigation findings, update if stale
-3. If no spec exists for a significantly affected module: create one documenting current behavior
-   - Run `rpi scaffold spec --topic "..." --write`
+3. If no spec exists for a significantly affected module: create one documenting current behavior — use `rpi` to scaffold and save a spec artifact
 4. Present created/updated specs: "These specs will guide implementation — look right?"
 
 Then suggest the next step:
@@ -130,8 +130,7 @@ For features that involve multiple interacting decisions, new components, or sig
 Build a thorough understanding of the terrain before proposing solutions.
 
 1. **Read all mentioned files fully** before spawning sub-tasks
-2. **Validate upstream status** if a research doc was provided:
-   Run: `rpi frontmatter get <research-path> status`
+2. **Validate upstream status** if a research doc was provided: use `rpi` to check the research artifact's current status.
    - If `active`: proceed — this is the expected state
    - If `draft`: warn the user:
      ```
@@ -144,11 +143,9 @@ Build a thorough understanding of the terrain before proposing solutions.
      Warning: Research doc is already marked complete — it may have already been consumed by a previous proposal.
      Proceed anyway? (yes / no)
      ```
-3. **Resolve the artifact chain** if a research doc was provided:
-   Run: `rpi chain <input-path>`
+3. **Resolve the artifact chain** if a research doc was provided: use `rpi` to resolve the full artifact chain from the input document.
    Read all files it identifies.
-3. **Check for existing proposals** on the same topic:
-   Run: `rpi scan --type proposal`
+3. **Check for existing proposals** on the same topic: use `rpi` to check for existing proposals.
 4. **Spawn parallel research sub-tasks:**
    - Sub-task: "Find components and files related to [feature] — return organized file listings grouped by purpose"
    - Sub-task (@codebase-analyzer): Understand current architecture and patterns in use
@@ -260,9 +257,7 @@ After the user selects directions, validate the combined choices:
 
 ### Step 4: Write Proposal
 
-**Create the proposal doc**:
-- Without research: `rpi scaffold propose --topic "..." --write`
-- With research: `rpi scaffold propose --topic "..." --research <path> --write`
+**Create the proposal doc**: Use `rpi` to scaffold and save a proposal artifact for this topic (linking to the research doc if one exists).
 
 This creates `.thoughts/proposals/YYYY-MM-DD-description.md` with frontmatter pre-populated.
 
@@ -278,12 +273,12 @@ This creates `.thoughts/proposals/YYYY-MM-DD-description.md` with frontmatter pr
 - Open Questions (resolve all before marking complete)
 - References
 
-**Mark proposal as active**: `rpi frontmatter transition <proposal-path> active`
+**Mark proposal as active**: Use `rpi` to transition the proposal to active status.
 
 **Transition upstream artifacts**: If this proposal was created from a research doc:
 1. Re-read the research doc's key findings, suggested next steps, and open questions
 2. Verify the proposal addresses them — check each finding was incorporated or explicitly scoped out, each question was answered or deferred with rationale
-3. If all points are covered: `rpi frontmatter transition <research-path> complete`
+3. If all points are covered, use `rpi` to transition the research artifact to complete
 4. If gaps remain, note them:
    ```
    Research doc has unaddressed items:
@@ -298,8 +293,7 @@ This creates `.thoughts/proposals/YYYY-MM-DD-description.md` with frontmatter pr
 
 1. Check `.thoughts/specs/` for specs covering affected modules
 2. If specs exist: review for accuracy against investigation findings, update if stale
-3. If no spec exists for a significantly affected module: create one documenting current behavior
-   - Run `rpi scaffold spec --topic "..." --write`
+3. If no spec exists for a significantly affected module: create one documenting current behavior — use `rpi` to scaffold and save a spec artifact
 4. Present created/updated specs: "These specs will guide implementation — look right?"
 
 ### Step 6: Review & Iterate
@@ -325,12 +319,7 @@ When the user provides a path to an existing proposal that needs updating:
 3. **Assess impact** — which decisions are affected? Which still hold?
 4. **Research if needed** — spawn targeted sub-tasks only for the areas that changed
 5. **Propose changes** — present what you'd update and why, get buy-in before modifying
-6. **Update the document** — modify in place, update the frontmatter:
-   ```
-   rpi frontmatter set <proposal> status updated
-   rpi frontmatter set <proposal> last_updated "<YYYY-MM-DD>"
-   rpi frontmatter set <proposal> update_reason "<Brief description of what changed>"
-   ```
+6. **Update the document** — modify in place, use `rpi` to update the proposal's frontmatter with update metadata (set status to "updated", add last_updated date and update_reason)
 7. Add an `## Update Log` section at the bottom if one doesn't exist, with a dated entry explaining what changed and why
 8. **Update affected specs** if the changes alter documented behavior
 

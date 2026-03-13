@@ -8,6 +8,7 @@ model: opus
 Create implementation plans with phased tasks, success criteria, and verification steps.
 
 **Prerequisite**: The `rpi` binary must be available in PATH. If not found, run `go build -o bin/rpi ./cmd/rpi` or `make install`.
+Run `rpi --help` to discover available commands and `rpi <command> --help` for detailed usage with examples.
 
 **Two modes — auto-detected from input:**
 
@@ -76,7 +77,7 @@ For tasks that don't need a full propose → plan pipeline. Typically: bug fixes
 After understanding is confirmed (or immediately if the task is unambiguous):
 
 1. **Break the work into phases** (often just 1-2 for simple tasks)
-2. **Create the plan file**: Run `rpi scaffold plan --topic "..." --write`
+2. **Create the plan file**: Use `rpi` to scaffold and save a plan artifact for this topic.
    This creates `.thoughts/plans/YYYY-MM-DD-description.md` with frontmatter pre-populated.
 3. **Fill in the plan content**: phases, tasks, code snippets, success criteria, commit steps. Each phase should include:
    - Overview of what the phase accomplishes
@@ -113,8 +114,7 @@ For complex tasks that already went through the pipeline. Triggered by proposal 
 
 1. **Read project conventions** — check for `CLAUDE.md` in the project root and note the actual commands for running tests, type checking, and linting. These will be used in success criteria instead of generic placeholders.
 
-2. **Validate upstream status** of the proposal:
-   Run: `rpi frontmatter get <proposal-path> status`
+2. **Validate upstream status** of the proposal: Use `rpi` to check the proposal's current status.
    - If `active`: proceed — this is the expected state
    - If `draft`: warn the user:
      ```
@@ -128,9 +128,7 @@ For complex tasks that already went through the pipeline. Triggered by proposal 
      Proceed anyway? (yes / no)
      ```
 
-3. **Resolve the input document chain.**
-
-   Run: `rpi chain <input-path>`
+3. **Resolve the input document chain.** Use `rpi` to resolve the full artifact chain from the input document.
 
    This recursively follows frontmatter links (proposal → research) and returns the full artifact chain with metadata. Read all the files it identifies.
 
@@ -184,7 +182,7 @@ Before defining phases, assess whether the proposal fits in a single plan:
    Shall I write individual plan files for each?
    ```
 
-   After approval, write individual plan files per unit using `rpi scaffold plan --proposal <path> --topic "..." --write`, then present the recommended starting point: `/rpi-implement .thoughts/plans/YYYY-MM-DD-unit-1.md`
+   After approval, use `rpi` to scaffold and save individual plan artifacts for each unit (linking them to the proposal), then present the recommended starting point: `/rpi-implement .thoughts/plans/YYYY-MM-DD-unit-1.md`
 
    **Stop here if decomposing** — each unit gets its own plan invocation.
 
@@ -224,8 +222,7 @@ After phase buy-in:
 
 ### Step 5: Write the Plan
 
-**Create the plan file**:
-- `rpi scaffold plan --proposal <path> --topic "..." --write`
+**Create the plan file**: Use `rpi` to scaffold and save a plan artifact, linking it to the proposal.
 
 This creates the file at `.thoughts/plans/YYYY-MM-DD-description.md` with frontmatter pre-populated.
 
@@ -242,10 +239,10 @@ This creates the file at `.thoughts/plans/YYYY-MM-DD-description.md` with frontm
 After the plan is written, transition the proposal it was built from:
 1. Re-read the proposal's open questions, design decisions, and scope
 2. Verify the plan covers all decisions — each design decision maps to at least one phase/task, nothing was silently dropped
-3. If all points are covered: `rpi frontmatter transition <proposal-path> complete`
+3. If all points are covered, use `rpi` to transition the proposal to complete
 4. If the proposal links to research that is still `active` or `draft`, check it too:
    - Verify research findings were addressed by the proposal (they should have been — but catch cases where `/rpi-propose` didn't transition)
-   - If covered: `rpi frontmatter transition <research-path> complete`
+   - If covered, use `rpi` to transition the research to complete
 5. If gaps remain in either artifact, note them:
    ```
    Upstream artifacts have unaddressed items:

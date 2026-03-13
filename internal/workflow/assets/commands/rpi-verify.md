@@ -10,6 +10,7 @@ Validate that an implementation matches its proposal artifacts across three dime
 This command is purely advisory — it does not block anything. It can be re-run after fixes to confirm resolution.
 
 **Prerequisite**: The `rpi` binary must be available in PATH. If not found, run `go build -o bin/rpi ./cmd/rpi` or `make install`.
+Run `rpi --help` to discover available commands and `rpi <command> --help` for detailed usage with examples.
 
 ## Step 1: Receive the input
 
@@ -21,10 +22,10 @@ If no arguments were provided, proceed to Step 2 (auto-detection).
 
 When no path is provided, detect from recent git changes:
 
-1. Run in parallel:
-   - `rpi git-context changed-files` — files changed on the current branch (falls back to last 5 commits if on main)
-   - `rpi scan --status active --type plan` — find active plans
-   - `rpi scan --status active --type proposal` — find active proposals
+1. Run in parallel using `rpi`:
+   - Get the list of changed files on the current branch (falls back to last 5 commits if on main)
+   - Find active plans
+   - Find active proposals
 2. If artifacts found, announce:
    ```
    Found active plan at [path] — verifying against it.
@@ -41,15 +42,13 @@ When no path is provided, detect from recent git changes:
 
 ## Step 3: Read referenced artifacts
 
-Read the provided or detected artifact(s) fully. Then resolve the artifact chain:
-
-Run: `rpi chain <artifact-path>`
+Read the provided or detected artifact(s) fully. Then use `rpi` to resolve the artifact chain.
 
 This returns the full chain (plan → proposal → research) with metadata. Read the files it identifies.
 
 Also check:
 - `.thoughts/specs/` — if this directory exists, read any specs relevant to the changed domain areas
-- Use the changed files list from `rpi git-context changed-files` to identify which files were actually changed in the implementation
+- Use `rpi` to get the list of changed files to identify which files were actually changed in the implementation
 
 Present a summary before proceeding:
 
@@ -77,16 +76,16 @@ Check whether everything that was planned has been done.
   Context:
   - [Include the plan content, ticket content, and list of changed files]
 
-  Use these binary commands for mechanical checks:
-  - `rpi verify completeness <plan-path>` — returns checkbox counts (checked vs total) and file coverage (planned files vs actually changed files)
-  - `rpi verify markers` — scans changed files for TODO/FIXME/HACK markers
+  Use `rpi` for mechanical checks:
+  - Run completeness checks on the plan — returns checkbox counts (checked vs total) and file coverage (planned files vs actually changed files)
+  - Run marker scans on changed files — scans for TODO/FIXME/HACK markers
 
   Then check each of these using your own judgment:
   1. **Plan phases**: Are all phases checked off? List any unchecked items.
   2. **Acceptance criteria**: If a ticket exists, are all acceptance criteria met? Read the actual implementation files to verify — don't trust checkboxes alone.
-  3. **TODO/FIXME/HACK markers**: Report any found by `rpi verify markers` in new or modified code.
+  3. **TODO/FIXME/HACK markers**: Report any markers found by the marker scan in new or modified code.
   4. **Test coverage**: Do tests exist for new functionality? Check that new public functions, components, or endpoints have corresponding test files or test cases.
-  5. **File coverage**: Were all files mentioned in the plan actually created or modified? Use the file coverage output from `rpi verify completeness`.
+  5. **File coverage**: Were all files mentioned in the plan actually created or modified? Use the file coverage output from the completeness check.
 
   For each item, report:
   - PASS: [what was satisfied]
@@ -157,7 +156,7 @@ After all three sub-agents complete, synthesize their findings into a single rep
    - **Warnings (should fix)**: Incomplete test coverage, minor deviations, inconsistent patterns
    - **Notes (consider fixing)**: Style nits, minor naming mismatches, suggestions
 
-3. **Write the report**: Run `rpi scaffold verify-report --topic "Verification: [feature]" --write`
+3. **Write the report**: Use `rpi` to scaffold and save a verification report for this feature.
    This creates the report file at `.thoughts/reviews/` with frontmatter and section headers. Fill in each section with the sub-agent findings.
 
 4. **Present the summary** to the user:

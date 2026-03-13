@@ -10,6 +10,7 @@ Investigate the codebase conversationally to understand how things work, find pa
 This is the entry point for unclear or open-ended questions: "How does X work?", "What's going on with Y?", "Can we improve Z?". When insights crystallize into something actionable, suggest `/rpi-propose`.
 
 **Prerequisite**: The `rpi` binary must be available in PATH. If not found, run `go build -o bin/rpi ./cmd/rpi` or `make install`.
+Run `rpi --help` to discover available commands and `rpi <command> --help` for detailed usage with examples.
 
 ## Step 1: Receive the question
 
@@ -25,7 +26,7 @@ This works for focused questions ("how does auth work?") and open-ended explorat
 ## Step 2: Read mentioned files and check existing context
 
 - If the user mentions specific files, read them fully before doing anything else
-- Check for existing research: run `rpi scan --type research`
+- Use `rpi` to check for existing research artifacts on this topic
   - If relevant research exists, mention it: "I found existing research on this topic: [path]. I'll build on it."
   - If none, continue
 
@@ -80,9 +81,9 @@ Want me to save these findings to `.thoughts/research/`? This makes them availab
 ```
 
 If they agree:
-1. Run `rpi scaffold research --topic "..." --write`
+1. Use `rpi` to scaffold and save a research artifact for this topic
 2. Fill in key findings, file references, and assessment
-3. Mark as active: `rpi frontmatter transition <research-path> active`
+3. Use `rpi` to transition the research artifact to active status
 4. Present the path: "Saved to `.thoughts/research/YYYY-MM-DD-topic.md`"
 
 **Do not force artifact creation.** The default is conversational — only save when requested or clearly useful.

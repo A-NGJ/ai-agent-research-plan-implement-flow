@@ -8,6 +8,7 @@ model: sonnet
 You are tasked with implementing an approved technical plan from `.thoughts/plans/`. These plans contain phases with specific changes and success criteria.
 
 **Prerequisite**: The `rpi` binary must be available in PATH. If not found, run `go build -o bin/rpi ./cmd/rpi` or `make install`.
+Run `rpi --help` to discover available commands and `rpi <command> --help` for detailed usage with examples.
 
 Plans come in two forms:
 - **Pipeline plans**: Reference proposals (`.thoughts/proposals/`) and optionally research docs. Read these when you need deeper context.
@@ -17,7 +18,7 @@ Plans come in two forms:
 
 When given a plan path:
 
-- **Validate plan status**: run `rpi frontmatter get <plan-path> status`
+- **Validate plan status**: Use `rpi` to check the plan's current status.
   - If `draft` or `active`: proceed (draft = fresh plan, active = resuming)
   - If `complete`: warn the user:
     ```
@@ -25,14 +26,14 @@ When given a plan path:
     Proceeding may duplicate work. Continue anyway? (yes / no)
     ```
 - Read the plan completely and check for any existing checkmarks (- [x])
-- Resolve the artifact chain: run `rpi chain <plan-path>`
+- Resolve the artifact chain: use `rpi` to resolve the plan's artifact chain and read upstream context.
   This returns linked proposals, research docs. Read the files it identifies.
 - Read all files mentioned in the plan
 - **Read files fully** - never use limit/offset parameters, you need complete context
 - Think deeply about how the pieces fit together
 - Create a todo list to track your progress
-- Update the plan status: run `rpi frontmatter transition <plan> active`
-- Check current progress: run `rpi verify completeness <plan>` to see completed vs remaining items
+- Update the plan status: use `rpi` to transition the plan to active
+- Check current progress: use `rpi` to check plan progress (checkbox counts and file coverage) to see completed vs remaining items
 - Start implementing if you understand what needs to be done
 
 If no plan path provided, ask for one.
@@ -47,7 +48,7 @@ Plans are carefully designed, but reality can be messy. Your job is to:
 - Verify your work makes sense in the broader codebase context
 - Update checkboxes in the plan as you complete sections
 - Commit changes after each phase (after automated and manual testing have passed)
-  - **Before staging**: run `rpi git-context sensitive-check` — if it flags any files, warn the user and exclude them from the commit
+  - **Before staging**: use `rpi` to check staged files for sensitive content — if it flags any files, warn the user and exclude them from the commit
   - List the files you plan to add for each commit
   - Show the commit message(s) you'll use. Try to keep them concise yet descriptive.
   - Ask: "I plan to create [N] commit(s) with these changes. Shall I proceed?"
@@ -146,7 +147,7 @@ Use sub-tasks sparingly - mainly for targeted debugging or exploring unfamiliar 
 If the plan has existing checkmarks:
 
 - Trust that completed work is done
-- Run `rpi verify completeness <plan>` to see what's done vs remaining
+- Use `rpi` to check plan progress (checkbox counts and file coverage) to see what's done vs remaining
 - Pick up from the first unchecked item
 - Verify previous work only if something seems off
 
@@ -162,5 +163,5 @@ When all phases are done and verified:
    - Present spec updates → human checkpoint: "Updated specs to reflect final behavior — accurate?"
    - Skip this step if no relevant specs exist
 
-2. **Update the plan status**: run `rpi frontmatter transition <plan> complete`
+2. **Update the plan status**: use `rpi` to mark the plan as complete
 3. **Announce**: "All phases complete. Plan status updated to `complete`."
