@@ -38,10 +38,10 @@ Scale investigation effort to the question:
 - **Exploratory question** (e.g., "what could we improve about X?"): Broad investigation focused on surfacing opportunities and trade-offs.
 
 **Sub-agents to use:**
-- Sub-task: "Load the `locate-codebase` skill, then find WHERE files and components live for [topic]"
+- Sub-task: "Find WHERE files and components live for [topic] — return organized file listings grouped by purpose"
 - Sub-task (@codebase-analyzer): Understand HOW specific code works
-- Sub-task: "Load the `find-patterns` skill, then find examples of existing patterns for [topic]"
-- Sub-task: "Load the `locate-thoughts` skill, then discover what documents exist about [topic]"
+- Sub-task: "Find examples of existing code patterns for [topic] — return concrete snippets with file:line references"
+- Sub-task: "Search .thoughts/ for existing documents about [topic] — return file listings grouped by type"
 
 Run sub-agents in parallel when they're searching for different things.
 

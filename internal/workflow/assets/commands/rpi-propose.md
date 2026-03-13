@@ -48,7 +48,7 @@ For focused decisions that don't warrant a full investigation — choosing betwe
 1. **Read any mentioned files fully**
 2. **Do proportional research** — scale to the decision's scope:
    - If the decision is localized (one module, one pattern): read the relevant files directly
-   - If it touches multiple areas: spawn 1-2 targeted sub-tasks (locate-codebase, find-patterns)
+   - If it touches multiple areas: spawn 1-2 targeted sub-tasks to locate relevant files and find existing patterns
 3. **Present the decision frame:**
    ```
    Here's what I understand:
@@ -150,10 +150,10 @@ Build a thorough understanding of the terrain before proposing solutions.
 3. **Check for existing proposals** on the same topic:
    Run: `rpi scan --type proposal`
 4. **Spawn parallel research sub-tasks:**
-   - Sub-task: "Load the `locate-codebase` skill, then find components related to [feature]"
+   - Sub-task: "Find components and files related to [feature] — return organized file listings grouped by purpose"
    - Sub-task (@codebase-analyzer): Understand current architecture and patterns in use
-   - Sub-task: "Load the `locate-thoughts` skill, then find existing research, proposals, and plans about [topic]"
-   - Sub-task: "Load the `find-patterns` skill, then find how similar problems were solved in the codebase for [topic]"
+   - Sub-task: "Search .thoughts/ for existing research, proposals, and plans about [topic] — return file listings grouped by type"
+   - Sub-task: "Find how similar problems are solved in the codebase for [topic] — return concrete code snippets with file:line references"
 5. **Read all files identified by research tasks**
 6. **Probe for non-functional requirements** — consider which of these matter:
    - Performance (latency, throughput, resource usage)
@@ -193,7 +193,7 @@ Map the decision space — what are the meaningful choices, and what are the rea
    - Error handling strategy
    - API surface / interface shape
 2. **Spawn parallel sub-tasks** for deeper investigation if needed:
-   - Sub-task: "Load the `find-patterns` skill, then find similar patterns in the codebase for [topic]"
+   - Sub-task: "Find similar patterns in the codebase for [topic] — return concrete code snippets with file:line references"
    - Sub-task (when valuable): Web research for library docs, benchmarks, or architectural patterns
 3. **Wait for ALL sub-tasks to complete**
 4. **Present design options:**

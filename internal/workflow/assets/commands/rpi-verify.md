@@ -128,7 +128,7 @@ Check whether the implementation fits the existing codebase.
   Context:
   - [Include the list of changed files and their contents]
 
-  Load the `find-patterns` skill, then check each of these:
+  Find existing code patterns in the codebase to compare against, then check each of these:
   1. **Naming conventions**: Do new files, functions, variables, and classes follow the naming patterns used in the rest of the codebase? Find similar existing code to compare.
   2. **Error handling**: Does error handling follow established patterns? Compare with similar code in the project.
   3. **Code reuse**: Does the new code use existing utilities, helpers, or shared code rather than reinventing? Check for duplication with existing code.

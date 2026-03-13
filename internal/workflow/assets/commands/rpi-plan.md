@@ -48,8 +48,8 @@ For tasks that don't need a full propose → plan pipeline. Typically: bug fixes
    - **Obvious** (specific file/function named, single localized change): read those files directly, no sub-tasks needed
    - **Moderate** (area known, pattern unclear): spawn 1-2 targeted sub-tasks as needed
    - **Cross-cutting** (multiple systems, unclear file landscape): spawn all three in parallel:
-     - Sub-task: "Load the `locate-codebase` skill, then find files related to [task]"
-     - Sub-task: "Load the `find-patterns` skill, then find how similar things are done in the codebase for [task]"
+     - Sub-task: "Find files related to [task] — return organized file listings grouped by purpose"
+     - Sub-task: "Find how similar things are done in the codebase for [task] — return concrete code snippets with file:line references"
      - Sub-task (@codebase-analyzer): Understand the specific code that needs to change
 4. **Read the key files** identified by research
 5. **If the task is ambiguous or you have questions**, present findings before proceeding:
