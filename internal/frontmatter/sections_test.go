@@ -151,3 +151,51 @@ func TestExtractSectionBodyStartsWithH2(t *testing.T) {
 		t.Errorf("unexpected content: %q, want %q", content, body)
 	}
 }
+
+func TestListSectionsMultiple(t *testing.T) {
+	got := ListSections(testBody)
+	want := []string{
+		"## Summary",
+		"## Design Decisions",
+		"## Phase 1: Foundation",
+		"## Phase 2: Integration",
+		"## References",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("expected %d sections, got %d: %v", len(want), len(got), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("section[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+func TestListSectionsEmptyBody(t *testing.T) {
+	got := ListSections("")
+	if got != nil {
+		t.Errorf("expected nil, got %v", got)
+	}
+}
+
+func TestListSectionsNoHeadings(t *testing.T) {
+	body := "# Title\n\nSome content without any ## headings.\n"
+	got := ListSections(body)
+	if got != nil {
+		t.Errorf("expected nil, got %v", got)
+	}
+}
+
+func TestListSectionsBodyStartsWithH2(t *testing.T) {
+	body := "## First\n\nContent.\n\n## Second\n\nMore content.\n"
+	got := ListSections(body)
+	want := []string{"## First", "## Second"}
+	if len(got) != len(want) {
+		t.Fatalf("expected %d sections, got %d: %v", len(want), len(got), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("section[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}

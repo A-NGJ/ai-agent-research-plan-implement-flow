@@ -69,3 +69,37 @@ func ExtractSections(body string, headings []string) map[string]string {
 	}
 	return result
 }
+
+// ListSections returns the ## heading lines from the given markdown body,
+// in document order. Each entry is the full heading line (e.g. "## Summary").
+// Returns nil if the body contains no ## headings.
+func ListSections(body string) []string {
+	if body == "" {
+		return nil
+	}
+
+	var headings []string
+
+	parts := strings.Split(body, "\n## ")
+
+	for i, part := range parts {
+		if i == 0 {
+			if !strings.HasPrefix(body, "## ") {
+				continue
+			}
+			part = strings.TrimPrefix(body, "## ")
+		}
+
+		headingEnd := strings.Index(part, "\n")
+		var headingText string
+		if headingEnd == -1 {
+			headingText = part
+		} else {
+			headingText = part[:headingEnd]
+		}
+
+		headings = append(headings, "## "+headingText)
+	}
+
+	return headings
+}
