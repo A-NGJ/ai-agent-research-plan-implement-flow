@@ -7,6 +7,22 @@ import (
 	"testing"
 )
 
+func TestGet_AGENTS(t *testing.T) {
+	content, err := Get("AGENTS.md")
+	if err != nil {
+		t.Fatalf("Get(AGENTS.md) returned error: %v", err)
+	}
+	if content == "" {
+		t.Fatal("Get(AGENTS.md) returned empty content")
+	}
+	if !strings.Contains(content, "# AGENTS.md") {
+		t.Error("AGENTS.md template missing expected '# AGENTS.md' header")
+	}
+	if !strings.Contains(content, ".thoughts/") {
+		t.Error("AGENTS.md template missing .thoughts/ directory reference")
+	}
+}
+
 func TestGet_CLAUDE(t *testing.T) {
 	content, err := Get("CLAUDE.md")
 	if err != nil {
@@ -45,6 +61,7 @@ func TestGet_Unknown(t *testing.T) {
 
 func TestGet_MatchesWorkflowAsset(t *testing.T) {
 	for name := range map[string]string{
+		"AGENTS.md":   "templates/AGENTS.md.template",
 		"CLAUDE.md":   "templates/CLAUDE.md.template",
 		"PIPELINE.md": "templates/PIPELINE.md.template",
 	} {
@@ -154,11 +171,11 @@ func TestGet_FallsBackToEmbedded(t *testing.T) {
 
 func TestNames(t *testing.T) {
 	names := Names()
-	if len(names) != 2 {
-		t.Fatalf("expected 2 names, got %d: %v", len(names), names)
+	if len(names) != 3 {
+		t.Fatalf("expected 3 names, got %d: %v", len(names), names)
 	}
 
-	expected := []string{"CLAUDE.md", "PIPELINE.md"}
+	expected := []string{"AGENTS.md", "CLAUDE.md", "PIPELINE.md"}
 	for i, name := range expected {
 		if names[i] != name {
 			t.Errorf("names[%d] = %q, want %q", i, names[i], name)
