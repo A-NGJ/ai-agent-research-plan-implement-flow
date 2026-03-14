@@ -20,20 +20,15 @@ When given a plan path:
 
 - **Validate plan status**: Use `rpi` to check the plan's current status.
   - If `draft` or `active`: proceed (draft = fresh plan, active = resuming)
-  - If `complete`: warn the user:
-    ```
-    Warning: This plan is already marked complete — it appears to have been fully implemented.
-    Proceeding may duplicate work. Continue anyway? (yes / no)
-    ```
+  - If `complete`: warn the user that proceeding may duplicate work
 - Read the plan completely and check for any existing checkmarks (- [x])
 - Resolve the artifact chain: use `rpi` to resolve the plan's artifact chain and read upstream context.
   This returns linked proposals, research docs. Read the files it identifies.
 - Read all files mentioned in the plan
 - **Read files fully** - never use limit/offset parameters, you need complete context
 - Think deeply about how the pieces fit together
-- Create a todo list to track your progress
 - Update the plan status: use `rpi` to transition the plan to active
-- Check current progress: use `rpi` to check plan progress (checkbox counts and file coverage) to see completed vs remaining items
+- Check current progress: use `rpi verify completeness` on the plan to see completed vs remaining items
 - Start implementing if you understand what needs to be done
 
 If no plan path provided, ask for one.
@@ -130,7 +125,7 @@ After implementing a phase:
 
 If instructed to execute multiple phases consecutively, skip the pause until the last phase. Otherwise, assume you are just doing one phase.
 
-do not check off items in the manual testing steps until confirmed by the user.
+Do not check off items in the manual testing steps until confirmed by the user.
 
 ## If You Get Stuck
 
@@ -140,14 +135,14 @@ When something isn't working as expected:
 - Consider if the codebase has evolved since the plan was written
 - Present the mismatch clearly and ask for guidance
 
-Use sub-tasks sparingly - mainly for targeted debugging or exploring unfamiliar territory.
+If you're stuck on unfamiliar code, research it before guessing.
 
 ## Resuming Work
 
 If the plan has existing checkmarks:
 
 - Trust that completed work is done
-- Use `rpi` to check plan progress (checkbox counts and file coverage) to see what's done vs remaining
+- Use `rpi verify completeness` on the plan to see what's done vs remaining
 - Pick up from the first unchecked item
 - Verify previous work only if something seems off
 

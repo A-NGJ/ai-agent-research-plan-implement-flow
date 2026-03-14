@@ -9,17 +9,9 @@ Find WHERE code lives in a codebase and organize findings by purpose. This is a 
 
 ## Search Strategy
 
-### Step 0: Check Index (optional fast path)
+### Quick start: Check for a codebase index
 
-Run: `rpi index status`
-If the index exists and was built within the last hour:
-  Run: `rpi index query "[topic]" --format json`
-  Run: `rpi index files --format json`
-  Use the symbol locations and file list to target your searches precisely.
-  Skip broad glob/grep exploration — go directly to organizing results.
-If no index or stale:
-  Note: "No codebase index found. Run `rpi index build` for faster results."
-  Proceed with normal search strategy below.
+Run `rpi index status` — if the index is fresh, use `rpi index query "[topic]"` and `rpi index files` to target your searches precisely and skip broad exploration. If no index exists, proceed with the search strategy below.
 
 ### Initial Broad Search
 1. Think about effective search patterns — naming conventions, related terms, synonyms

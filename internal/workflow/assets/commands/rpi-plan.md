@@ -12,97 +12,35 @@ Run `rpi --help` to discover available commands and `rpi <command> --help` for d
 
 **Two modes — auto-detected from input:**
 
-- **Standalone mode**: For simple/short tasks. You describe what needs to be done, the plan does its own lightweight research and produces a plan directly. No prior `/rpi-propose` needed.
-- **Pipeline mode**: For complex tasks with existing docs. You provide a proposal document from `/rpi-propose` that links back to the pipeline (explore → propose → plan → implement).
-
-## Initial Response
-
-When this command is invoked:
-
-1. **Check what was provided:**
-   - If a path to a proposal document was provided → **Pipeline mode**
-   - If a plain task description was provided → **Standalone mode**
-   - If nothing was provided, respond:
-   ```
-   I'll help you create an implementation plan.
-
-   You can use this in two ways:
-
-   **Simple task** (standalone):
-   `/rpi-plan Add a retry mechanism to the webhook handler`
-
-   **From the pipeline** (with prior proposal):
-   `/rpi-plan .thoughts/proposals/2026-03-10-feature-name.md`
-   ```
+- **Standalone mode**: Plain task description → lightweight research, then plan directly
+- **Pipeline mode**: Path to a proposal document → plan built from prior pipeline work
+- **Nothing provided** → Ask for input with brief examples of each mode
 
 ---
 
 ## Standalone Mode
 
-For tasks that don't need a full propose → plan pipeline. Typically: bug fixes, small features, refactors, config changes, adding tests, etc.
+For tasks that don't need the full propose → plan pipeline: bug fixes, small features, refactors, config changes, adding tests.
 
-### Step 1: Understand the Task
+### Step 1: Understand the task
 
-1. **Read project conventions** — check for `CLAUDE.md` in the project root and note the actual commands for running tests, type checking, and linting. These will be used in success criteria instead of generic placeholders.
-2. **Read any provided files fully** (tickets, referenced files, etc.)
-3. **Research proportional to complexity** — scale effort to what the task actually needs:
-   - **Obvious** (specific file/function named, single localized change): read those files directly, no sub-tasks needed
-   - **Moderate** (area known, pattern unclear): spawn 1-2 targeted sub-tasks as needed
-   - **Cross-cutting** (multiple systems, unclear file landscape): spawn all three in parallel:
-     - Sub-task: "Find files related to [task] — return organized file listings grouped by purpose"
-     - Sub-task: "Find how similar things are done in the codebase for [task] — return concrete code snippets with file:line references"
-     - Sub-task (@codebase-analyzer): Understand the specific code that needs to change
-4. **Read the key files** identified by research
-5. **If the task is ambiguous or you have questions**, present findings before proceeding:
-   ```
-   Here's what I found:
+1. Check the project's conventions and configuration for the actual commands for running tests, linting, and type checking — these will be used in success criteria instead of generic placeholders
+2. Read any provided files fully
+3. Research proportional to complexity:
+   - **Obvious** (specific file/function named): read those files directly
+   - **Moderate** (area known, pattern unclear): use `rpi index query "[task]"` to locate files, then read them
+   - **Cross-cutting** (multiple systems): investigate in parallel — find relevant files with `rpi index query`, understand how similar things are done in the codebase, read the key implementation files
+4. If the task is ambiguous or you have questions, present findings and open questions before writing the plan. If everything is clear, write the plan directly.
 
-   Relevant files:
-   - `path/to/file.ext:line` — [what it does, what needs to change]
-   - `path/to/other.ext:line` — [what it does, what needs to change]
+### Step 2: Write the plan
 
-   Existing patterns:
-   - [How similar things are handled in the codebase]
+1. Break the work into phases (often just 1-2 for simple tasks)
+2. Use `rpi` to scaffold and save a plan artifact for this topic
+3. Fill in phases with: tasks and file paths, key code snippets, success criteria (automated using the project's actual test/lint commands + manual), and commit steps. Include tests in the same phase as the code they test.
 
-   My approach:
-   - [1-3 sentences on what the plan will do]
+### Step 3: Review & iterate
 
-   Questions before I write the plan:
-   - [specific ambiguity to resolve]
-   ```
-   If everything is clear with no open questions, skip this step and write the plan directly.
-
-### Step 2: Write the Plan
-
-After understanding is confirmed (or immediately if the task is unambiguous):
-
-1. **Break the work into phases** (often just 1-2 for simple tasks)
-2. **Create the plan file**: Use `rpi` to scaffold and save a plan artifact for this topic.
-   This creates `.thoughts/plans/YYYY-MM-DD-description.md` with frontmatter pre-populated.
-3. **Fill in the plan content**: phases, tasks, code snippets, success criteria, commit steps. Each phase should include:
-   - Overview of what the phase accomplishes
-   - Tasks with file paths and change descriptions (include key code snippets)
-   - Tests in the same phase as the code they test
-   - Success criteria split into automated verification (use actual commands from `CLAUDE.md`) and manual verification
-   - Commit step (stage list + message)
-   - "Pause for manual confirmation" note between phases
-
-### Step 3: Review & Iterate
-
-Present the plan with a brief summary:
-```
-Plan saved: `.thoughts/plans/YYYY-MM-DD-description.md`
-
-Phases:
-- Phase 1: [name] — [what it does] ([scope])
-
-Anything you'd like to adjust?
-```
-
-When revising based on feedback:
-- **Scope change** (add/remove tasks): update the Scope line and affected phase tasks
-- **Approach change**: re-research if needed — say so rather than guessing
-- Keep iterating until the user confirms or stops giving feedback
+Present the plan summary and ask if anything needs adjusting. Keep iterating until the user confirms.
 
 ---
 
@@ -110,179 +48,59 @@ When revising based on feedback:
 
 For complex tasks that already went through the pipeline. Triggered by proposal documents from `/rpi-propose`.
 
-### Step 1: Read Inputs & Validate
+### Step 1: Read inputs & validate
 
-1. **Read project conventions** — check for `CLAUDE.md` in the project root and note the actual commands for running tests, type checking, and linting. These will be used in success criteria instead of generic placeholders.
+1. Check the project's conventions for test/lint/build commands
+2. Use `rpi` to check the proposal's status — warn if it's still in draft or already marked complete
+3. Use `rpi` to resolve the full artifact chain from the proposal. Read all linked files fully.
+4. Check `.thoughts/specs/` for specs covering modules affected by this proposal
+5. Spot-check 3-5 key files from the proposal against the current codebase — flag any significant drift
+6. Present validation results and any scoping questions before proceeding
 
-2. **Validate upstream status** of the proposal: Use `rpi` to check the proposal's current status.
-   - If `active`: proceed — this is the expected state
-   - If `draft`: warn the user:
-     ```
-     Warning: Proposal is still in draft — it may not be finalized.
-     Consider running `/rpi-propose` to complete it first.
-     Proceed anyway? (yes / no)
-     ```
-   - If `complete`: warn the user:
-     ```
-     Warning: Proposal is already marked complete — it may have already been consumed by a previous plan.
-     Proceed anyway? (yes / no)
-     ```
+### Step 2: Scope assessment
 
-3. **Resolve the input document chain.** Use `rpi` to resolve the full artifact chain from the input document.
+- **Single concern, ≤4 phases** → proceed to phase definition
+- **Multiple concerns or >4 phases** → propose decomposition into separate plans with scope, files, and dependencies. After approval, scaffold individual plan files for each unit.
 
-   This recursively follows frontmatter links (proposal → research) and returns the full artifact chain with metadata. Read all the files it identifies.
+### Step 3: Phase definition
 
-   **IMPORTANT**: Read entire files — no limit/offset
-   **CRITICAL**: Read these yourself before spawning sub-tasks
+Break the proposal's changes into ordered phases:
+- Group related changes that must ship together
+- Respect dependency order (data model → business logic → API → UI)
+- Each phase should leave the codebase in a working, testable state
+- Include tests in the same phase as the code they test
 
-3. **Read relevant specs** — check `.thoughts/specs/` for specs covering modules affected by this proposal. Specs inform phase design and success criteria ("behavior should match spec X").
+Present proposed phases for buy-in before writing the full plan.
 
-4. **Spot-check critical files from the proposal**:
-   - Read 3-5 of the most important files mentioned
-   - Verify the codebase still matches what the proposal describes
-   - If anything has drifted significantly, flag it immediately
+### Step 4: Write the plan
 
-5. **Present validation results**:
-   ```
-   I've read the pipeline docs:
-   - Proposal: [path] — [key decisions: A, B, C]
-   - Research: [path] — [topic summary] (if linked)
-   - Specs: [paths] (if relevant)
-
-   Validation against current codebase:
-   - [file:line] — confirmed, matches docs
-   - [file:line] — DRIFT DETECTED: [explanation]
-
-   Questions before I assess scope:
-   - [Scoping/phasing questions only — design decisions are already made]
-   ```
-
-### Step 2: Scope Assessment & Decomposition
-
-Before defining phases, assess whether the proposal fits in a single plan:
-
-1. **Assess scope:**
-   - **Single concern, ≤4 phases** → proceed to Phase Definition (single plan)
-   - **Multiple concerns or >4 phases** → decomposition path
-
-2. **If decomposing**, propose work units with scope, files, and dependencies:
-   ```
-   This proposal covers multiple concerns. I'd break it into separate plans:
-
-   1. **[Unit title]** — [scope description]
-      Files: [key files]
-      Depends on: nothing (foundation)
-
-   2. **[Unit title]** — [scope description]
-      Files: [key files]
-      Depends on: #1
-
-   Recommended implementation order: #1 → #2 → #3
-
-   Shall I write individual plan files for each?
-   ```
-
-   After approval, use `rpi` to scaffold and save individual plan artifacts for each unit (linking them to the proposal), then present the recommended starting point: `/rpi-implement .thoughts/plans/YYYY-MM-DD-unit-1.md`
-
-   **Stop here if decomposing** — each unit gets its own plan invocation.
-
-### Step 3: Phase Definition
-
-1. **Create a planning todo list** using TodoWrite
-2. **Break the proposal's changes into ordered phases:**
-   - Group related changes that must ship together
-   - Respect dependency order (data model -> business logic -> API -> UI)
-   - Each phase should leave the codebase in a working, testable state
-   - Include tests in the same phase as the code they test — do not put tests in a separate phase or bottom section
-   - Identify files from the proposal's architecture/file structure sections
-3. **Present proposed phases for buy-in:**
-   ```
-   Proposed phases:
-
-   ## Phase 1: [Name] — [what it accomplishes]
-   Files: [list from proposal]
-   Depends on: nothing (foundation)
-
-   ## Phase 2: [Name] — [what it accomplishes]
-   Files: [list from proposal]
-   Depends on: Phase 1
-
-   Does this phasing make sense?
-   ```
-
-### Step 4: Success Criteria & Verification
-
-After phase buy-in:
-
-1. **Define success criteria for each phase:**
-   - **Automated Verification**: Use actual commands from `CLAUDE.md` (tests, linting, type checking, build)
-   - **Manual Verification**: Human testing steps (UI, edge cases, integration)
-2. **Define commit strategy per phase**
-3. **Present for review**
-
-### Step 5: Write the Plan
-
-**Create the plan file**: Use `rpi` to scaffold and save a plan artifact, linking it to the proposal.
-
-This creates the file at `.thoughts/plans/YYYY-MM-DD-description.md` with frontmatter pre-populated.
-
-**Fill in the plan content**: source documents section, phases (tasks, code snippets, success criteria, commit steps), migration notes if applicable, and references. Each phase should include:
-- Overview (what it accomplishes and why it comes first / dependencies on prior phases)
-- Tasks with file paths and change descriptions (include key code snippets, reference proposal for interface details)
+Use `rpi` to scaffold and save a plan artifact linked to the proposal. Fill in all phases with:
+- Overview of what the phase accomplishes and its dependencies
+- Tasks with file paths and change descriptions (include key code snippets)
 - Tests in the same phase as the code they test
-- Success criteria split into automated and manual verification
+- Success criteria split into automated (use the project's actual test/lint commands) and manual verification
 - Commit step (stage list + message)
-- "Pause for manual confirmation" note between phases
+- "Pause for manual confirmation" between phases
 
-### Step 6: Transition Upstream Artifacts
+### Step 5: Transition upstream artifacts
 
-After the plan is written, transition the proposal it was built from:
-1. Re-read the proposal's open questions, design decisions, and scope
-2. Verify the plan covers all decisions — each design decision maps to at least one phase/task, nothing was silently dropped
-3. If all points are covered, use `rpi` to transition the proposal to complete
-4. If the proposal links to research that is still `active` or `draft`, check it too:
-   - Verify research findings were addressed by the proposal (they should have been — but catch cases where `/rpi-propose` didn't transition)
-   - If covered, use `rpi` to transition the research to complete
-5. If gaps remain in either artifact, note them:
-   ```
-   Upstream artifacts have unaddressed items:
-   - [proposal/research item not covered in plan]
+After the plan is written, verify it covers all the proposal's design decisions — nothing silently dropped. Use `rpi` to transition the proposal to complete. If the proposal links to research still marked active, check it too and transition if covered. Note any gaps and ask.
 
-   Mark as complete anyway, or leave current status?
-   ```
+### Step 6: Review & iterate
 
-### Step 7: Review & Iterate
-
-Present the plan with a brief summary:
-```
-Plan saved: `.thoughts/plans/YYYY-MM-DD-description.md`
-
-Phases:
-- Phase 1: [name] — [what it does] ([N files])
-- Phase 2: [name] — [what it does] ([N files])
-
-Anything you'd like to adjust?
-```
-
-When revising based on feedback:
-- **Phase reordering**: update dependencies and the "why it comes first" rationale
-- **Scope change** (add/remove tasks): update the Scope line and affected phase tasks
-- **Approach change**: re-research if needed — say so rather than guessing
-- Keep iterating until the user confirms or stops giving feedback
+Present the plan summary and ask if anything needs adjusting. Keep iterating until the user confirms.
 
 ---
 
-## Guidelines (Both Modes)
+## Guidelines
 
-1. **Be Interactive**: Get buy-in on approach/phases before writing the full plan
-2. **Be Practical**: Focus on incremental, testable changes that keep the codebase working
-3. **Separate Verification**: Always split success criteria into automated and manual
-4. **No Open Questions**: Resolve ambiguity before finalizing — ask the user if needed
-5. **Right-size the Plan**: Simple tasks get simple plans (1 phase, minimal ceremony). Complex tasks get detailed phasing with full verification
-6. **Commit After Each Phase**: Every phase ends with a commit step — stage only that phase's files, not everything at once
-7. **Tests Belong to Their Phase**: Write tests alongside the code they cover, not in a separate section at the bottom
+1. **Be interactive** — get buy-in on phases before writing the full plan
+2. **Be practical** — incremental, testable changes that keep the codebase working
+3. **Separate verification** — always split success criteria into automated and manual
+4. **Right-size the plan** — simple tasks get simple plans (1 phase, minimal ceremony); complex tasks get detailed phasing
+5. **Commit after each phase** — stage only that phase's files
+6. **Tests belong to their phase** — write tests alongside the code they cover, not in a separate section
+7. **Trust prior stages** (pipeline mode) — don't redo research or proposal work; reference those docs
+8. **Spot-check reality** (pipeline mode) — verify the codebase matches the proposal before planning
 
-### Pipeline Mode Only
-8. **Trust Prior Stages**: Don't redo research or proposal work — reference those docs
-9. **Spot-check Reality**: Verify the codebase still matches the proposal before planning
-- If the user confirms that the plan looks good, load `/rpi-implement` to start implementation based on the plan.
+If the user confirms the plan looks good, proceed to `/rpi-implement` with the plan path.

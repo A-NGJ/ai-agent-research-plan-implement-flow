@@ -5,7 +5,7 @@ model: opus
 
 # Solution Proposal
 
-Investigate the codebase, analyze trade-offs, and produce a proposal document that captures what we learned, what we decided, and why. This merges investigation, design, and structural planning into a single command with human checkpoints at every meaningful juncture.
+Investigate the codebase, analyze trade-offs, and produce a proposal document that captures what we learned, what we decided, and why.
 
 This is part of the pipeline: **research → propose → plan → implement**. Propose is where the hard choices happen — understanding the terrain, weighing options, and committing to an approach. The output is a proposal document that Plan consumes directly.
 
@@ -14,110 +14,42 @@ Run `rpi --help` to discover available commands and `rpi <command> --help` for d
 
 ## Initial Response
 
-**Auto-detect the mode from what's provided:**
+Auto-detect the mode:
 
-- **Plain text description of a focused decision** (e.g., "should we use X or Y?", "design the caching approach") → **Quick mode**
-- **Path to research doc, or complex feature description** → **Full mode**
 - **Path to an existing proposal doc** → **Incremental mode** (updating a previous proposal)
-- **Nothing provided** → Ask:
-  ```
-  I'll help you investigate and propose a solution.
-
-  You can use this in several ways:
-
-  **Quick decision** (focused):
-  `/rpi-propose should we use Redis or Memcached for session caching?`
-
-  **Complex feature** (full investigation):
-  `/rpi-propose add real-time notifications to the dashboard`
-
-  **From prior exploration**:
-  `/rpi-propose .thoughts/research/2026-03-10-notifications.md`
-
-  **Update existing proposal**:
-  `/rpi-propose .thoughts/proposals/2026-03-10-notifications.md`
-  ```
+- **Focused decision** (e.g., "should we use X or Y?", "design the caching approach") → **Quick mode**
+- **Complex feature description or path to research doc** → **Full mode**
+- **Nothing provided** → Ask for input with brief examples of each mode
 
 ---
 
 ## Quick Mode
 
-For focused decisions that don't warrant a full investigation — choosing between two approaches, designing a single component's interface, deciding on a data model shape.
+For focused decisions: choosing between approaches, designing a single component's interface, deciding on a data model shape.
 
-### Step 1: Quick Context
+### Step 1: Understand the decision
 
-1. **Read any mentioned files fully**
-2. **Do proportional research** — scale to the decision's scope:
-   - If the decision is localized (one module, one pattern): read the relevant files directly
-   - If it touches multiple areas: spawn 1-2 targeted sub-tasks to locate relevant files and find existing patterns
-3. **Present the decision frame:**
-   ```
-   Here's what I understand:
+1. Read any mentioned files fully
+2. Use `rpi index query "[topic]"` to locate relevant files, then read them. For decisions touching multiple areas, also look for similar patterns in the codebase.
+3. Present the decision frame: what needs to be decided, the relevant codebase context (with file:line refs), and the constraints. If the user already specified the options, skip straight to analysis.
 
-   The decision: [what needs to be decided]
-   Context: [relevant codebase state, with file:line refs]
-   Constraints: [what limits our options]
+### Step 2: Trade-off analysis
 
-   Let me explore the options.
-   ```
-   If the user already specified the options, skip straight to analysis.
+Present options with concrete trade-offs — how each works, pros, cons, and whether it fits existing patterns (with file:line evidence). Give a clear recommendation with reasoning tied to the specific constraints.
 
-### Step 2: Trade-off Analysis
-
-Present options with concrete trade-offs:
-```
-## [Decision Topic]
-
-**Option A: [Name]**
-- How it works: [brief description]
-- Pros: [concrete, tied to constraints]
-- Cons: [concrete, with severity]
-- Codebase fit: [does it match existing patterns? file:line evidence]
-
-**Option B: [Name]**
-- [same structure]
-
-**Recommendation**: [Option] because [reasoning tied to specific constraints and codebase context]
-```
-
-### Step 3: Write Proposal
+### Step 3: Write proposal
 
 After the user confirms direction:
 
-Use `rpi` to scaffold and save a proposal artifact for this topic.
+Use `rpi` to scaffold and save a proposal artifact for this topic. Fill in the relevant sections — for Quick mode, focus on: Summary, Constraints & Requirements, Design Decisions, References. Skip sections that don't apply.
 
-This creates `.thoughts/proposals/YYYY-MM-DD-description.md` with frontmatter pre-populated.
+Use `rpi` to transition the proposal to active status.
 
-Fill in the sections — for Quick mode, focus on: Summary, Constraints & Requirements, Design Decisions (often just one), References. Skip sections that don't apply (Architecture, File Structure, etc.).
+If this proposal was created from a research doc, use `rpi` to check whether the research findings are fully addressed, then transition it to complete. If gaps remain, note them and ask.
 
-**Mark proposal as active**: Use `rpi` to transition the proposal to active status.
+Check `.thoughts/specs/` for specs covering affected modules — update stale ones, create new ones for significantly affected modules not yet documented. Present any created/updated specs for review.
 
-**Transition upstream artifacts**: If this proposal was created from a research doc:
-1. Re-read the research doc's key findings, suggested next steps, and open questions
-2. Verify the proposal addresses them — check each finding was incorporated or explicitly scoped out, each question was answered or deferred with rationale
-3. If all points are covered, use `rpi` to transition the research artifact to complete
-4. If gaps remain, note them:
-   ```
-   Research doc has unaddressed items:
-   - [item not covered in proposal]
-
-   Mark research as complete anyway, or leave it active?
-   ```
-
-### Step 4: Create/Update Specs
-
-**This step is explicit, not optional.**
-
-1. Check `.thoughts/specs/` for specs covering affected modules
-2. If specs exist: review for accuracy against investigation findings, update if stale
-3. If no spec exists for a significantly affected module: create one documenting current behavior — use `rpi` to scaffold and save a spec artifact
-4. Present created/updated specs: "These specs will guide implementation — look right?"
-
-Then suggest the next step:
-```
-Proposal saved. Ready to plan the implementation?
-→ /rpi-plan .thoughts/proposals/YYYY-MM-DD-description.md
-```
+Then suggest: `→ /rpi-plan .thoughts/proposals/YYYY-MM-DD-description.md`
 
 ---
 
@@ -125,188 +57,50 @@ Proposal saved. Ready to plan the implementation?
 
 For features that involve multiple interacting decisions, new components, or significant architectural changes.
 
-### Step 1: Investigate Codebase
+### Step 1: Investigate codebase
 
 Build a thorough understanding of the terrain before proposing solutions.
 
-1. **Read all mentioned files fully** before spawning sub-tasks
-2. **Validate upstream status** if a research doc was provided: use `rpi` to check the research artifact's current status.
-   - If `active`: proceed — this is the expected state
-   - If `draft`: warn the user:
-     ```
-     Warning: Research doc is still in draft — it may not be finalized.
-     Consider running `/rpi-research` to complete it first.
-     Proceed anyway? (yes / no)
-     ```
-   - If `complete`: warn the user:
-     ```
-     Warning: Research doc is already marked complete — it may have already been consumed by a previous proposal.
-     Proceed anyway? (yes / no)
-     ```
-3. **Resolve the artifact chain** if a research doc was provided: use `rpi` to resolve the full artifact chain from the input document.
-   Read all files it identifies.
-3. **Check for existing proposals** on the same topic: use `rpi` to check for existing proposals.
-4. **Spawn parallel research sub-tasks:**
-   - Sub-task: "Find components and files related to [feature] — return organized file listings grouped by purpose"
-   - Sub-task (@codebase-analyzer): Understand current architecture and patterns in use
-   - Sub-task: "Search .thoughts/ for existing research, proposals, and plans about [topic] — return file listings grouped by type"
-   - Sub-task: "Find how similar problems are solved in the codebase for [topic] — return concrete code snippets with file:line references"
-5. **Read all files identified by research tasks**
-6. **Probe for non-functional requirements** — consider which of these matter:
-   - Performance (latency, throughput, resource usage)
-   - Reliability (error handling, retry behavior, graceful degradation)
-   - Security (auth, data sensitivity, injection surfaces)
-   - Observability (logging, metrics, debugging)
+1. **Read all mentioned files fully** before investigating further
+2. **Check upstream context** — if a research doc was provided, use `rpi` to check its status and resolve the full artifact chain. Read all files it identifies. Warn if the research is still in draft or already complete. Also check for existing proposals on the same topic.
+3. **Investigate the relevant areas** (parallelize when possible):
+   - Run `rpi scan` to find existing documents about this topic in `.thoughts/`
+   - Run `rpi index query "[feature]"` to locate relevant files, then read them
+   - Understand the current architecture and patterns in the affected areas
+   - Find how similar problems are solved in the codebase — concrete examples with file:line refs
+4. **Surface relevant non-functional concerns** — consider which genuinely matter (performance, reliability, security, observability). Don't force-fit all of them.
+5. **Present findings and open questions** before exploring design options. If the user wants to proceed without checkpoints ("just design it", "I trust your judgment"), compress steps and present the synthesized proposal directly.
 
-   Don't force-fit all of these — just surface the genuinely relevant ones.
+### Step 2: Explore design options
 
-7. **Present findings + questions → human checkpoint:**
-   ```
-   Based on investigation:
+Map the independent design decisions. Investigate further if needed — look for similar patterns in the codebase, do web research for library docs or benchmarks when valuable. Present options with concrete trade-offs and a recommendation for each. Use diagrams when they clarify relationships or data flow. Get buy-in before proceeding.
 
-   Current architecture:
-   - [Component/system description with file:line reference]
-   - [Relevant pattern or convention in use]
+### Step 3: Synthesize
 
-   Constraints I've identified:
-   - [Technical constraint from codebase]
-   - [Requirement from user]
-   - [Non-functional requirement, if relevant]
+After the user selects directions, validate the combined choices work together:
 
-   Questions before I explore design options:
-   - [Question requiring human judgment or domain knowledge]
-   ```
+- Check for contradictions or unexpected complexity when combined
+- Check integration with existing code — where does the proposal touch existing systems? Do interfaces need to change?
+- Identify risks that only appear when seeing the whole design
+- Define file structure when the feature involves new files or module reorganization
 
-   If the user signals they want you to proceed without checkpoints ("just design it", "I trust your judgment"), compress steps and present the synthesized proposal directly.
+Present the cohesive proposal for review before writing.
 
-### Step 2: Explore Design Options → Human Checkpoint
+### Step 4: Write proposal
 
-Map the decision space — what are the meaningful choices, and what are the real trade-offs?
+Use `rpi` to scaffold and save a proposal artifact (linking to the research doc if one exists). Fill in all sections: Summary, Investigation Findings, Constraints & Requirements, Design Decisions, Architecture, File Structure, Risks & Mitigations, What This Proposal Does NOT Cover, References.
 
-1. **Identify the key design dimensions** — independent decisions to make:
-   - Data model / storage approach
-   - Component decomposition / module boundaries
-   - Communication patterns (sync vs async, events vs direct calls)
-   - Error handling strategy
-   - API surface / interface shape
-2. **Spawn parallel sub-tasks** for deeper investigation if needed:
-   - Sub-task: "Find similar patterns in the codebase for [topic] — return concrete code snippets with file:line references"
-   - Sub-task (when valuable): Web research for library docs, benchmarks, or architectural patterns
-3. **Wait for ALL sub-tasks to complete**
-4. **Present design options:**
-   ```
-   ## Design Decisions
+Use `rpi` to transition the proposal to active status.
 
-   ### Decision 1: [e.g., State Management Approach]
+If created from a research doc, verify the research findings are addressed, then use `rpi` to transition it to complete. If gaps remain, note them and ask.
 
-   **Option A: [Name]**
-   - How it works: [description]
-   - Pros: [concrete advantages]
-   - Cons: [concrete disadvantages]
-   - Fits existing patterns: [yes/no, with evidence from file:line]
+Check `.thoughts/specs/` and update or create specs for affected modules. Present for review.
 
-   **Option B: [Name]**
-   - [same structure]
+### Step 5: Review & iterate
 
-   **Recommendation**: [Option] because [reasoning tied to constraints]
+Present the draft proposal location. Iterate based on feedback. Resolve all open questions before marking the proposal complete.
 
-   Which options align with your goals?
-   ```
-
-   Use diagrams when they clarify relationships or data flow better than prose.
-
-### Step 3: Synthesize → Human Checkpoint
-
-After the user selects directions, validate the combined choices:
-
-1. **Check composition** — do the selected options work together?
-   - Any contradictions? (e.g., "eventual consistency" + "immediate validation")
-   - Unexpected complexity when combined?
-   - Emergent properties — good or bad?
-2. **Check integration with existing systems:**
-   - Where does the proposal touch existing code? (specific file:line refs)
-   - Do existing interfaces need to change?
-   - Migration concerns for existing data or behavior?
-3. **Identify risks from the full picture** — risks that only appear when seeing the whole design
-4. **Define file structure** — when the feature involves new files or module reorganization:
-   - New files with responsibilities and exports
-   - Modified files with what changes
-   - Module boundaries and dependency direction
-5. **Present the cohesive proposal:**
-   ```
-   Proposed approach:
-
-   ## Summary
-   [1-3 sentence elevator pitch]
-
-   ## Key Decisions
-   1. [Decision]: [Chosen option] — [one-line rationale]
-   2. [Decision]: [Chosen option] — [one-line rationale]
-
-   ## How the Parts Connect
-   [Component interaction diagram or description]
-
-   ## File Structure (if applicable)
-   [New/modified files with responsibilities]
-
-   ## Risks & Mitigations
-   - [Risk]: [Mitigation strategy]
-
-   Does this look right before I write the full proposal?
-   ```
-
-### Step 4: Write Proposal
-
-**Create the proposal doc**: Use `rpi` to scaffold and save a proposal artifact for this topic (linking to the research doc if one exists).
-
-This creates `.thoughts/proposals/YYYY-MM-DD-description.md` with frontmatter pre-populated.
-
-**Fill in all proposal sections:**
-- Summary (elevator pitch)
-- Investigation Findings (what we learned — file:line refs)
-- Constraints & Requirements
-- Design Decisions (chosen option, alternatives, rationale, evidence for each)
-- Architecture (component overview, data flow with diagrams, integration points)
-- File Structure (new/modified files, module boundaries — when applicable)
-- Risks & Mitigations (table with impact/likelihood/strategy)
-- What This Proposal Does NOT Cover
-- Open Questions (resolve all before marking complete)
-- References
-
-**Mark proposal as active**: Use `rpi` to transition the proposal to active status.
-
-**Transition upstream artifacts**: If this proposal was created from a research doc:
-1. Re-read the research doc's key findings, suggested next steps, and open questions
-2. Verify the proposal addresses them — check each finding was incorporated or explicitly scoped out, each question was answered or deferred with rationale
-3. If all points are covered, use `rpi` to transition the research artifact to complete
-4. If gaps remain, note them:
-   ```
-   Research doc has unaddressed items:
-   - [item not covered in proposal]
-
-   Mark research as complete anyway, or leave it active?
-   ```
-
-### Step 5: Create/Update Specs
-
-**This step is explicit, not optional.**
-
-1. Check `.thoughts/specs/` for specs covering affected modules
-2. If specs exist: review for accuracy against investigation findings, update if stale
-3. If no spec exists for a significantly affected module: create one documenting current behavior — use `rpi` to scaffold and save a spec artifact
-4. Present created/updated specs: "These specs will guide implementation — look right?"
-
-### Step 6: Review & Iterate
-
-1. Present the draft proposal location
-2. Iterate based on feedback
-3. Resolve all open questions before marking status as `complete`
-
-Then suggest the next step:
-```
-Proposal saved. Ready to plan the implementation?
-→ /rpi-plan .thoughts/proposals/YYYY-MM-DD-description.md
-```
+Then suggest: `→ /rpi-plan .thoughts/proposals/YYYY-MM-DD-description.md`
 
 ---
 
@@ -317,9 +111,9 @@ When the user provides a path to an existing proposal that needs updating:
 1. **Read the existing proposal fully**
 2. **Understand what's changing** — ask what prompted the update (new requirements, implementation findings, changed constraints)
 3. **Assess impact** — which decisions are affected? Which still hold?
-4. **Research if needed** — spawn targeted sub-tasks only for the areas that changed
+4. **Research if needed** — investigate only the areas that changed
 5. **Propose changes** — present what you'd update and why, get buy-in before modifying
-6. **Update the document** — modify in place, use `rpi` to update the proposal's frontmatter with update metadata (set status to "updated", add last_updated date and update_reason)
+6. **Update the document** — modify in place, use `rpi` to update frontmatter with update metadata (set status to "updated", add last_updated date and update_reason)
 7. Add an `## Update Log` section at the bottom if one doesn't exist, with a dated entry explaining what changed and why
 8. **Update affected specs** if the changes alter documented behavior
 
@@ -327,34 +121,10 @@ When the user provides a path to an existing proposal that needs updating:
 
 ## Guidelines
 
-1. **Be Opinionated** — Present recommendations with clear reasoning. The user wants opinions grounded in evidence, not a neutral menu.
-2. **Be Interactive** — Get buy-in at each checkpoint before proceeding. A proposal that surprises the user during review means the process failed.
-3. **Be Evidence-Based** — Ground decisions in codebase patterns, constraints, and concrete trade-offs. "The codebase already uses this pattern in `auth/handler.py:45`" is strong.
-4. **Be Focused** — Design at the right level of abstraction — architecture and key interfaces, not implementation details.
-5. **Resolve Open Questions** — Don't finalize with unresolved questions. Either answer them through research or make a decision and document the reasoning.
-6. **Respect Existing Patterns** — Prefer solutions that align with how the codebase already works. Diverging has a real cost — only do it when the benefit clearly outweighs.
-7. **Use Diagrams** — When describing component interactions, data flow, or state transitions, ASCII diagrams often communicate more efficiently than prose.
-8. **Specs Are Not Optional** — Every proposal must end with a spec review/creation step. Specs document baseline behavior and serve as implementation guidelines.
-
-## Visual Aids
-
-Use ASCII diagrams when they clarify the proposal:
-
-**Component interaction:**
-```
-┌──────────┐     ┌──────────┐     ┌──────────┐
-│  Client  │────▶│   API    │────▶│ Service  │
-└──────────┘     └──────────┘     └──────────┘
-```
-
-**Data flow:**
-```
-User → API → Validate → Process → Store → Respond
-                ↓ (on failure)
-           Return error
-```
-
-**State transitions:**
-```
-[Draft] --publish--> [Active] --expire--> [Archived]
-```
+1. **Be opinionated** — present recommendations with clear reasoning grounded in evidence
+2. **Be interactive** — get buy-in at each checkpoint; a proposal that surprises the user during review means the process failed
+3. **Be evidence-based** — ground decisions in codebase patterns, constraints, and concrete trade-offs with file:line refs
+4. **Be focused** — design at the right level of abstraction: architecture and key interfaces, not implementation details
+5. **Resolve open questions** — don't finalize with unresolved questions
+6. **Respect existing patterns** — prefer solutions that align with how the codebase already works
+7. **Specs are not optional** — every proposal must end with a spec review/creation step

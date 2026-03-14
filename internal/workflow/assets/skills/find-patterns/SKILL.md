@@ -11,15 +11,9 @@ Find existing code patterns in the codebase so you (or the user) can model new c
 
 The key insight: effective pattern finding is iterative. Start broad, then narrow based on what you find. Don't try to guess the right search terms upfront — let the codebase teach you its vocabulary.
 
-### Phase 0: Check Index (optional fast path)
+### Quick start: Check for a codebase index
 
-Run: `rpi index status`
-If index exists and is fresh:
-  Run: `rpi index query "[pattern-topic]" --format json`
-  Use results to skip Phase 1 (Orientation) and most of Phase 2 (Search).
-  Go directly to reading representative files (Phase 2 step 3).
-If no index:
-  Proceed with Phase 1 as normal.
+Run `rpi index status` — if the index is fresh, use `rpi index query "[pattern-topic]"` to skip the orientation phase and go directly to reading representative files. If no index exists, proceed with Phase 1.
 
 ### Phase 1: Orientation
 
