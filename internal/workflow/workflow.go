@@ -75,7 +75,6 @@ func InstallTo(targetDir string, target Target, force bool) (int, error) {
 				switch parts[0] {
 				case "commands":
 					data = transformCommandFrontmatter(data)
-					data = transformCommandBody(data)
 				case "agents":
 					transformed, transformErr := transformAgentFrontmatter(data)
 					if transformErr != nil {
@@ -119,29 +118,6 @@ func transformCommandFrontmatter(content []byte) []byte {
 		}
 	}
 	return bytes.Join(lines, []byte("\n"))
-}
-
-// transformCommandBody rewrites Claude Code-specific tool invocation patterns
-// in command markdown body content to OpenCode conventions.
-func transformCommandBody(content []byte) []byte {
-	// Replace specific pattern first (before the general one)
-	result := bytes.ReplaceAll(content,
-		[]byte("Sub-task (@codebase-analyzer):"),
-		[]byte("Use @codebase-analyzer to"))
-	result = bytes.ReplaceAll(result,
-		[]byte("Sub-task:"),
-		[]byte("Subtask:"))
-
-	// Remove lines containing "using TodoWrite"
-	lines := bytes.Split(result, []byte("\n"))
-	filtered := make([][]byte, 0, len(lines))
-	for _, line := range lines {
-		if bytes.Contains(line, []byte("using TodoWrite")) {
-			continue
-		}
-		filtered = append(filtered, line)
-	}
-	return bytes.Join(filtered, []byte("\n"))
 }
 
 // transformAgentFrontmatter converts a Claude Code agent markdown file's

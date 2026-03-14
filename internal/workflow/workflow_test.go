@@ -90,47 +90,6 @@ func TestTransformAgentFrontmatter_NoFrontmatter(t *testing.T) {
 	}
 }
 
-func TestTransformCommandBody_SubtaskWithAgent(t *testing.T) {
-	input := []byte("- Sub-task (@codebase-analyzer): Understand the code\n")
-	got := string(transformCommandBody(input))
-	if !strings.Contains(got, "Use @codebase-analyzer to") {
-		t.Errorf("expected @codebase-analyzer mention, got:\n%s", got)
-	}
-	if strings.Contains(got, "Sub-task (@codebase-analyzer):") {
-		t.Error("original pattern should be replaced")
-	}
-}
-
-func TestTransformCommandBody_SubtaskPlain(t *testing.T) {
-	input := []byte("- Sub-task: \"Load the skill\"\n")
-	got := string(transformCommandBody(input))
-	if !strings.Contains(got, "Subtask:") {
-		t.Errorf("expected Subtask:, got:\n%s", got)
-	}
-	if strings.Contains(got, "Sub-task:") {
-		t.Error("original Sub-task: should be replaced")
-	}
-}
-
-func TestTransformCommandBody_TodoWrite(t *testing.T) {
-	input := []byte("Step 1\n1. **Create a planning todo list** using TodoWrite\nStep 2\n")
-	got := string(transformCommandBody(input))
-	if strings.Contains(got, "TodoWrite") {
-		t.Error("line containing TodoWrite should be removed")
-	}
-	if !strings.Contains(got, "Step 1") || !strings.Contains(got, "Step 2") {
-		t.Error("other lines should be preserved")
-	}
-}
-
-func TestTransformCommandBody_PreservesSkillRefs(t *testing.T) {
-	input := []byte("Load the `locate-codebase` skill, then find files\n")
-	got := string(transformCommandBody(input))
-	if !strings.Contains(got, "locate-codebase") {
-		t.Error("skill references should be preserved")
-	}
-}
-
 func TestInstallTo_OpenCode(t *testing.T) {
 	dir := t.TempDir()
 
