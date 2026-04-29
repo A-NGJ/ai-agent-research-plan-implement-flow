@@ -49,9 +49,11 @@ Targets:
 Also creates:
   .rpi/             Artifact directory hierarchy (research, designs, plans, etc.)
 
-Use --no-claude-md to skip rules file generation. Use --no-track to add
-.rpi/ to .gitignore (by default, .rpi/ is tracked in git). Use "rpi update"
-to sync an existing project with the latest workflow files.`,
+Use --no-claude-md to skip rules file generation. By default, .rpi/* is
+added to .gitignore with a !.rpi/specs/ negation so behavioral specs are
+tracked while research/designs/plans/reviews/diagnoses stay local. Use
+--no-track to gitignore the entire .rpi/ tree (specs included). Use
+"rpi update" to sync an existing project with the latest workflow files.`,
 	Example: `  # Initialize for Claude Code (default)
   rpi init
 
@@ -69,7 +71,7 @@ to sync an existing project with the latest workflow files.`,
 
 func init() {
 	initCmd.Flags().BoolVar(&initNoClaudeMD, "no-claude-md", false, "Skip rules file generation (CLAUDE.md or AGENTS.md)")
-	initCmd.Flags().BoolVar(&initNoTrack, "no-track", false, "Add .rpi/ to .gitignore (artifacts not tracked in git)")
+	initCmd.Flags().BoolVar(&initNoTrack, "no-track", false, "Gitignore the entire .rpi/ tree, including specs (default: ignore artifacts but track .rpi/specs/)")
 	initCmd.Flags().StringVar(&initTarget, "target", "claude", `AI coding tool to initialize for: "claude", "opencode", or "agents-only"`)
 	initCmd.Flags().BoolVar(&initNoMCP, "no-mcp", false, "Skip MCP server configuration")
 	rootCmd.AddCommand(initCmd)
@@ -156,7 +158,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	// Manage .gitignore for tool dir (skip for agents-only)
 	if cfg.toolDir != "" {
-		if err := ensureGitignoreEntry(w, targetDir, cfg.toolDir+"/"); err != nil {
+		if err := ensureGitignoreEntries(w, targetDir, cfg.toolDir+"/"); err != nil {
 			logWarning(w, fmt.Sprintf("Failed to update .gitignore: %v", err))
 		}
 	}
@@ -166,11 +168,14 @@ func runInit(cmd *cobra.Command, args []string) error {
 		configureMCP(w, targetDir)
 	}
 
-	// Add .rpi/ to .gitignore only if --no-track is set
+	// Manage .gitignore for .rpi/. Default: ignore artifacts but keep specs
+	// tracked. With --no-track: ignore the entire .rpi/ tree.
+	rpiEntries := []string{".rpi/*", "!.rpi/specs/"}
 	if initNoTrack {
-		if err := ensureGitignoreEntry(w, targetDir, ".rpi/"); err != nil {
-			logWarning(w, fmt.Sprintf("Failed to update .gitignore: %v", err))
-		}
+		rpiEntries = []string{".rpi/"}
+	}
+	if err := ensureGitignoreEntries(w, targetDir, rpiEntries...); err != nil {
+		logWarning(w, fmt.Sprintf("Failed to update .gitignore: %v", err))
 	}
 
 	// Sync shared project structure (dirs, skills, templates, rules, settings)
@@ -182,16 +187,27 @@ func runInit(cmd *cobra.Command, args []string) error {
 	})
 }
 
-func ensureGitignoreEntry(w io.Writer, targetDir, entry string) error {
+func ensureGitignoreEntries(w io.Writer, targetDir string, entries ...string) error {
+	if len(entries) == 0 {
+		return nil
+	}
 	gitignorePath := filepath.Join(targetDir, ".gitignore")
 
-	// Check if entry already exists
+	existing := make(map[string]bool)
 	if data, err := os.ReadFile(gitignorePath); err == nil {
 		for _, line := range strings.Split(string(data), "\n") {
-			if line == entry {
-				return nil // already present
-			}
+			existing[line] = true
 		}
+	}
+
+	var missing []string
+	for _, e := range entries {
+		if !existing[e] {
+			missing = append(missing, e)
+		}
+	}
+	if len(missing) == 0 {
+		return nil
 	}
 
 	f, err := os.OpenFile(gitignorePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -200,10 +216,12 @@ func ensureGitignoreEntry(w io.Writer, targetDir, entry string) error {
 	}
 	defer f.Close()
 
-	if _, err := fmt.Fprintf(f, "\n# RPI workflow\n%s\n", entry); err != nil {
+	if _, err := fmt.Fprintf(f, "\n# RPI workflow\n%s\n", strings.Join(missing, "\n")); err != nil {
 		return fmt.Errorf("write .gitignore: %w", err)
 	}
-	logSuccess(w, fmt.Sprintf("Added %s to .gitignore", entry))
+	for _, e := range missing {
+		logSuccess(w, fmt.Sprintf("Added %s to .gitignore", e))
+	}
 	return nil
 }
 

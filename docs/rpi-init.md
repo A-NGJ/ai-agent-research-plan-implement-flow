@@ -18,7 +18,7 @@ rpi init ~/projects/my-app --target opencode
 # Options
 rpi init --no-claude-md     # Skip rules file generation (CLAUDE.md or AGENTS.md)
 rpi init --no-mcp           # Skip MCP server registration
-rpi init --no-track         # Add .rpi/ to .gitignore (artifacts not tracked in git)
+rpi init --no-track         # Gitignore the entire .rpi/ tree (specs included)
 ```
 
 ## What it creates
@@ -41,7 +41,7 @@ rpi init --no-track         # Add .rpi/ to .gitignore (artifacts not tracked in 
 
 ### Shared (all targets)
 
-- `.rpi/` -- Directory structure for pipeline artifacts (tracked in git by default; use `--no-track` to gitignore)
+- `.rpi/` -- Directory structure for pipeline artifacts. By default `.gitignore` is updated with `.rpi/*` and `!.rpi/specs/`, so specs are tracked while research/designs/plans/reviews/diagnoses stay local. Use `--no-track` to gitignore the entire `.rpi/` tree (specs included).
 - `.rpi/templates/` -- Scaffold templates for plans, designs, research docs, specs, etc.
 
 ### MCP Server Configuration

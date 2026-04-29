@@ -98,9 +98,15 @@ func TestInitCreatesAllDirs(t *testing.T) {
 	if !strings.Contains(string(gitignore), ".claude/") {
 		t.Error(".gitignore missing .claude/ entry")
 	}
-	// .rpi/ should NOT be gitignored by default (tracked)
+	// .rpi/* should be gitignored by default, with .rpi/specs/ tracked
+	if !strings.Contains(string(gitignore), ".rpi/*\n") {
+		t.Error(".rpi/* should be in .gitignore by default")
+	}
+	if !strings.Contains(string(gitignore), "!.rpi/specs/\n") {
+		t.Error("!.rpi/specs/ negation should be in .gitignore by default")
+	}
 	if strings.Contains(string(gitignore), ".rpi/\n") {
-		t.Error(".rpi/ should not be in .gitignore by default")
+		t.Error("bare .rpi/ should not be in .gitignore by default (would gitignore specs too)")
 	}
 	output := buf.String()
 	if !strings.Contains(output, "Created .claude/skills/") {
@@ -191,6 +197,9 @@ func TestInitNoTrack(t *testing.T) {
 	if !strings.Contains(string(gitignore), ".rpi/\n") {
 		t.Error(".rpi/ should be in .gitignore with --no-track")
 	}
+	if strings.Contains(string(gitignore), "!.rpi/specs/") {
+		t.Error("--no-track should not emit the specs negation entry")
+	}
 	if !strings.Contains(string(gitignore), ".claude/") {
 		t.Error(".claude/ should still be in .gitignore")
 	}
@@ -252,8 +261,14 @@ func TestInitGitignore(t *testing.T) {
 	if !strings.Contains(content, ".claude/") {
 		t.Error("missing .claude/ entry")
 	}
+	if !strings.Contains(content, ".rpi/*\n") {
+		t.Error(".rpi/* should be in .gitignore by default")
+	}
+	if !strings.Contains(content, "!.rpi/specs/\n") {
+		t.Error("!.rpi/specs/ negation should be in .gitignore by default")
+	}
 	if strings.Contains(content, ".rpi/\n") {
-		t.Error(".rpi/ should not be in .gitignore by default")
+		t.Error("bare .rpi/ should not be in .gitignore by default")
 	}
 }
 
