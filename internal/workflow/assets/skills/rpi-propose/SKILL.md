@@ -15,6 +15,8 @@ Auto-detect the mode from input:
 - **Updating existing design** (path to existing design) → read it, understand what changed, propose updates in place
 - **Nothing provided** → ask for input with brief examples of each mode
 
+Any mode can be combined with **`--grill`** — pass `--grill` or use phrasing like "grill me on this" / "stress-test this" to invoke the externally-installed `grill-me` skill at the approval gate (see invariants).
+
 When the user approves the spec, suggest → `/rpi-plan <design-path>`.
 
 ## Invariants
@@ -26,6 +28,7 @@ When the user approves the spec, suggest → `/rpi-plan <design-path>`.
 - Link the design to upstream research via frontmatter
 - Create a behavioral spec with 5-8 Given/When/Then scenarios describing user-observable behavior — scenarios must not reference internal structure (structs, file paths, function names); include a Constraints section for boundaries and an Out of Scope section. Name the spec file after its `feature` field (e.g., `feature: rpi-status` → `rpi-status.md`)
 - Present the spec for approval — iterate until accepted
+- If the user requested grilling (via `--grill` or natural-language phrasing) and `grill-me` is in your available skills, invoke `grill-me` on the drafted design+spec before the approval gate. Apply revisions inline to the design and spec, then present for approval. If `grill-me` is unavailable, tell the user it must be installed externally and ask whether to proceed with the standard approval gate.
 - Transition artifacts: design → active, research → complete (if fully addressed)
 - For incremental mode: update in place, add an Update Log entry, update affected specs
 
@@ -35,3 +38,4 @@ When the user approves the spec, suggest → `/rpi-plan <design-path>`.
 - Be interactive — checkpoint before major decisions; a design that surprises during review means the process failed
 - Scale effort to complexity — a focused decision needs less investigation than a new subsystem
 - Specs are the contract — every design culminates in a spec
+- Grilling is opt-in and single-pass — re-invoke if a second round is needed
