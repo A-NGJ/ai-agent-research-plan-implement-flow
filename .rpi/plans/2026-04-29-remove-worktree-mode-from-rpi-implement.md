@@ -2,7 +2,7 @@
 date: 2026-04-29T00:00:00+02:00
 research: .rpi/research/2026-04-29-rpi-implement-worktree-mode-fragility.md
 spec: .rpi/specs/custom-agents.md
-status: active
+status: complete
 tags:
     - plan
     - rpi-implement
@@ -96,8 +96,8 @@ worktree-specific lines are removed.
 
 ### Commit
 
-- [ ] Stage: `internal/workflow/assets/skills/rpi-implement/SKILL.md`, `.rpi/specs/custom-agents.md`
-- [ ] Message: `refactor(implement): remove worktree mode from rpi-implement skill`
+- [x] Stage: `internal/workflow/assets/skills/rpi-implement/SKILL.md`, `.rpi/specs/custom-agents.md`
+- [x] Message: `refactor(implement): remove worktree mode from rpi-implement skill`
 
 ---
 
