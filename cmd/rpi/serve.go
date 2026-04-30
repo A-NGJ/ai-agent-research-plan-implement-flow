@@ -13,6 +13,7 @@ import (
 	"github.com/A-NGJ/rpi/internal/frontmatter"
 	"github.com/A-NGJ/rpi/internal/git"
 	"github.com/A-NGJ/rpi/internal/scanner"
+	"github.com/A-NGJ/rpi/internal/search"
 	tmpl "github.com/A-NGJ/rpi/internal/template"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/spf13/cobra"
@@ -191,6 +192,12 @@ func registerTools(s *mcp.Server) {
 		Name:        "rpi_archive_move",
 		Description: mcpDescription(archiveMoveCmd),
 	}, handleArchiveMove)
+
+	// Semantic search via optional qmd backend
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "rpi_search",
+		Description: mcpDescription(searchCmd),
+	}, handleSearch)
 }
 
 // --- No-param tool handlers ---
@@ -325,6 +332,14 @@ type archiveCheckRefsInput struct {
 type archiveMoveInput struct {
 	Path  string `json:"path" jsonschema:"path to the artifact to archive"`
 	Force bool   `json:"force,omitempty" jsonschema:"skip active reference check"`
+}
+
+type searchInput struct {
+	Query          string  `json:"query" jsonschema:"natural-language search query"`
+	Type           string  `json:"type,omitempty" jsonschema:"filter by artifact type (research, design, plan, spec, diagnosis, review)"`
+	Limit          int     `json:"limit,omitempty" jsonschema:"maximum hits to return (default 5, max 20)"`
+	IncludeArchive bool    `json:"include_archive,omitempty" jsonschema:"include archived artifacts in results"`
+	MinScore       float64 `json:"min_score,omitempty" jsonschema:"minimum relevance score (0.0-1.0)"`
 }
 
 // --- Parameterized tool handlers ---
@@ -579,4 +594,15 @@ func handleArchiveMove(_ context.Context, _ *mcp.CallToolRequest, input archiveM
 		return nil, nil, err
 	}
 	return jsonResult(result)
+}
+
+func handleSearch(ctx context.Context, _ *mcp.CallToolRequest, input searchInput) (*mcp.CallToolResult, any, error) {
+	resp := search.Query(ctx, rpiDirFlag, search.SearchParams{
+		Query:          input.Query,
+		Type:           input.Type,
+		Limit:          input.Limit,
+		IncludeArchive: input.IncludeArchive,
+		MinScore:       input.MinScore,
+	}, search.QueryOptions{})
+	return jsonResult(resp)
 }
