@@ -5,28 +5,32 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
-
-// stubRunner builds a runner that returns canned (output, err) per command name.
-func stubRunner(t *testing.T, responses map[string]stubResponse) runner {
-	t.Helper()
-	return func(_ context.Context, name string, args ...string) ([]byte, error) {
-		key := name
-		if len(args) > 0 {
-			key = name + " " + args[0]
-		}
-		r, ok := responses[key]
-		if !ok {
-			t.Fatalf("unexpected command: %s %v", name, args)
-		}
-		return []byte(r.out), r.err
-	}
-}
 
 type stubResponse struct {
 	out string
 	err error
+}
+
+// routeStub builds a runner that dispatches commands by full argv string,
+// joined with single spaces. Tests register the exact command line they
+// expect to see; unexpected commands fail the test loudly so we never
+// silently match the wrong call.
+func routeStub(t *testing.T, routes map[string]stubResponse) (runner, *[]string) {
+	t.Helper()
+	var seen []string
+	return func(_ context.Context, name string, args ...string) ([]byte, error) {
+		key := name + " " + strings.Join(args, " ")
+		key = strings.TrimSpace(key)
+		seen = append(seen, key)
+		r, ok := routes[key]
+		if !ok {
+			t.Fatalf("unexpected command: %s", key)
+		}
+		return []byte(r.out), r.err
+	}, &seen
 }
 
 func TestIsAvailable(t *testing.T) {
@@ -170,6 +174,132 @@ func TestStatusParser(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEnsureCollection(t *testing.T) {
+	// Pre-warm the availability cache so tests don't need to mock --version.
+	resetAvailabilityCache()
+	t.Cleanup(resetAvailabilityCache)
+
+	makeDir := func(t *testing.T) (rpiDir, name string) {
+		t.Helper()
+		dir := t.TempDir()
+		rpiDir = filepath.Join(dir, "myrepo", ".rpi")
+		if err := os.MkdirAll(rpiDir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		n, err := CollectionName(rpiDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return rpiDir, n
+	}
+
+	t.Run("creates when no prior collection exists", func(t *testing.T) {
+		rpiDir, name := makeDir(t)
+		abs, _ := filepath.Abs(rpiDir)
+
+		routes := map[string]stubResponse{
+			"qmd collection list --json":                              {out: "[]"},
+			"qmd collection add " + abs + " --name " + name:           {out: "added"},
+			"qmd context add qmd://" + name + " " + CollectionContext: {out: "ctx added"},
+		}
+		run, seen := routeStub(t, routes)
+		c := NewClient().WithRunner(run)
+
+		got, err := c.EnsureCollection(context.Background(), rpiDir)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != name {
+			t.Errorf("got name %q, want %q", got, name)
+		}
+		if len(*seen) != 3 {
+			t.Errorf("expected 3 commands (list+add+context), got %d: %v", len(*seen), *seen)
+		}
+	})
+
+	t.Run("no-op when collection already registered with matching path", func(t *testing.T) {
+		rpiDir, name := makeDir(t)
+		abs, _ := filepath.Abs(rpiDir)
+
+		listJSON := `[{"name":"` + name + `","pwd":"` + abs + `"}]`
+		routes := map[string]stubResponse{
+			"qmd collection list --json": {out: listJSON},
+		}
+		run, seen := routeStub(t, routes)
+		c := NewClient().WithRunner(run)
+
+		got, err := c.EnsureCollection(context.Background(), rpiDir)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != name {
+			t.Errorf("got name %q, want %q", got, name)
+		}
+		if len(*seen) != 1 {
+			t.Errorf("expected only the list call, got %d: %v", len(*seen), *seen)
+		}
+	})
+
+	t.Run("repairs path drift by remove + re-add", func(t *testing.T) {
+		rpiDir, name := makeDir(t)
+		abs, _ := filepath.Abs(rpiDir)
+
+		// Simulate a stale registration pointing at a different directory.
+		stalePath := filepath.Join(t.TempDir(), "old-checkout", ".rpi")
+		listJSON := `[{"name":"` + name + `","pwd":"` + stalePath + `"}]`
+
+		routes := map[string]stubResponse{
+			"qmd collection list --json":                              {out: listJSON},
+			"qmd collection remove " + name:                           {out: "removed"},
+			"qmd collection add " + abs + " --name " + name:           {out: "added"},
+			"qmd context add qmd://" + name + " " + CollectionContext: {out: "ctx added"},
+		}
+		run, seen := routeStub(t, routes)
+		c := NewClient().WithRunner(run)
+
+		got, err := c.EnsureCollection(context.Background(), rpiDir)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != name {
+			t.Errorf("got name %q, want %q", got, name)
+		}
+		if len(*seen) != 4 {
+			t.Errorf("expected 4 commands (list+remove+add+context), got %d: %v", len(*seen), *seen)
+		}
+	})
+
+	t.Run("propagates parse failure on malformed list output", func(t *testing.T) {
+		rpiDir, _ := makeDir(t)
+
+		routes := map[string]stubResponse{
+			"qmd collection list --json": {out: "not valid json"},
+		}
+		run, _ := routeStub(t, routes)
+		c := NewClient().WithRunner(run)
+
+		_, err := c.EnsureCollection(context.Background(), rpiDir)
+		if err == nil {
+			t.Fatal("expected error from malformed list output")
+		}
+	})
+
+	t.Run("propagates list failure", func(t *testing.T) {
+		rpiDir, _ := makeDir(t)
+
+		routes := map[string]stubResponse{
+			"qmd collection list --json": {err: errors.New("qmd: not running")},
+		}
+		run, _ := routeStub(t, routes)
+		c := NewClient().WithRunner(run)
+
+		_, err := c.EnsureCollection(context.Background(), rpiDir)
+		if err == nil {
+			t.Fatal("expected error from list failure")
+		}
+	})
 }
 
 func TestModelsCachedOnDisk(t *testing.T) {

@@ -2,6 +2,8 @@ package search
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +11,28 @@ import (
 	"strings"
 	"sync"
 )
+
+// CollectionContext is the description attached to RPI's qmd collection. qmd
+// returns this alongside hits to help its reranker score relevance.
+const CollectionContext = "RPI artifacts: research, designs, behavioral specs, plans, diagnoses"
+
+// CollectionEntry is qmd's per-collection metadata. We accept both `pwd`
+// (matching the SDK shape) and `path` (in case the CLI uses that key) when
+// parsing list output, so a future qmd schema tweak doesn't break drift
+// detection.
+type CollectionEntry struct {
+	Name string `json:"name"`
+	Pwd  string `json:"pwd,omitempty"`
+	Path string `json:"path,omitempty"`
+}
+
+// AbsPath returns whichever path field qmd populated.
+func (e CollectionEntry) AbsPath() string {
+	if e.Pwd != "" {
+		return e.Pwd
+	}
+	return e.Path
+}
 
 // runner is the exec indirection used by all qmd shell-outs. Tests substitute
 // a stub via WithRunner; production code uses defaultRunner.
@@ -96,6 +120,105 @@ func (c *Client) Status(ctx context.Context) (BackendState, error) {
 	state.DaemonRunning = mcpRunningRe.MatchString(state.RawStatus)
 	state.ModelsReady = modelsReadyRe.MatchString(state.RawStatus) || modelsCachedOnDisk()
 	return state, nil
+}
+
+// EnsureCollection registers the project's .rpi/ as a qmd collection,
+// repairing path drift if the same name is registered to a stale path. The
+// returned name is what should be passed to subsequent qmd calls
+// (`-c <name>`).
+func (c *Client) EnsureCollection(ctx context.Context, rpiDir string) (string, error) {
+	name, err := CollectionName(rpiDir)
+	if err != nil {
+		return "", err
+	}
+	absRpi, err := filepath.Abs(rpiDir)
+	if err != nil {
+		return "", fmt.Errorf("resolve rpiDir: %w", err)
+	}
+
+	entries, err := c.listCollections(ctx)
+	if err != nil {
+		return "", fmt.Errorf("list collections: %w", err)
+	}
+
+	var existing *CollectionEntry
+	for i := range entries {
+		if entries[i].Name == name {
+			existing = &entries[i]
+			break
+		}
+	}
+
+	switch {
+	case existing == nil:
+		// Not registered — create.
+		if err := c.addCollection(ctx, absRpi, name); err != nil {
+			return "", fmt.Errorf("add collection: %w", err)
+		}
+	case existing.AbsPath() != "" && !samePath(existing.AbsPath(), absRpi):
+		// Path drift — repair by removing and re-adding.
+		fmt.Fprintf(os.Stderr, "rpi-search: drift detected for collection %q (was %q, now %q); repairing\n",
+			name, existing.AbsPath(), absRpi)
+		if _, err := c.run(ctx, "qmd", "collection", "remove", name); err != nil {
+			return "", fmt.Errorf("remove stale collection: %w", err)
+		}
+		if err := c.addCollection(ctx, absRpi, name); err != nil {
+			return "", fmt.Errorf("re-add collection: %w", err)
+		}
+	default:
+		// Already registered with the right path; nothing to do.
+	}
+
+	return name, nil
+}
+
+// listCollections invokes `qmd collection list --json` and returns the parsed
+// entries. Empty output (no registered collections) is a valid case and
+// returns an empty slice without error.
+func (c *Client) listCollections(ctx context.Context) ([]CollectionEntry, error) {
+	out, err := c.run(ctx, "qmd", "collection", "list", "--json")
+	if err != nil {
+		return nil, fmt.Errorf("qmd collection list: %w (%s)", err, strings.TrimSpace(string(out)))
+	}
+	trimmed := strings.TrimSpace(string(out))
+	if trimmed == "" || trimmed == "[]" || trimmed == "null" {
+		return nil, nil
+	}
+	var entries []CollectionEntry
+	if err := json.Unmarshal([]byte(trimmed), &entries); err != nil {
+		return nil, fmt.Errorf("parse qmd collection list output: %w", err)
+	}
+	return entries, nil
+}
+
+// addCollection runs `qmd collection add` followed by `qmd context add` so
+// every newly-registered collection carries the descriptive context qmd's
+// reranker uses to bias relevance.
+func (c *Client) addCollection(ctx context.Context, absRpi, name string) error {
+	if out, err := c.run(ctx, "qmd", "collection", "add", absRpi, "--name", name); err != nil {
+		return fmt.Errorf("qmd collection add: %w (%s)", err, strings.TrimSpace(string(out)))
+	}
+	if out, err := c.run(ctx, "qmd", "context", "add", "qmd://"+name, CollectionContext); err != nil {
+		return fmt.Errorf("qmd context add: %w (%s)", err, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+// samePath compares two paths as canonical absolute forms. Symlink resolution
+// is best-effort — if either side fails to resolve we fall back to a literal
+// comparison so we don't false-trigger drift repair.
+func samePath(a, b string) bool {
+	canon := func(p string) string {
+		abs, err := filepath.Abs(p)
+		if err != nil {
+			return p
+		}
+		if resolved, err := filepath.EvalSymlinks(abs); err == nil {
+			return resolved
+		}
+		return abs
+	}
+	return canon(a) == canon(b)
 }
 
 // modelsCachedOnDisk is a defensive backstop for when qmd's status output
