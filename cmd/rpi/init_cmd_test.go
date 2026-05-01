@@ -63,6 +63,11 @@ func TestInitCreatesAllDirs(t *testing.T) {
 		t.Errorf("expected 10 skill dirs in .claude/skills/, got %d", len(entries))
 	}
 
+	// Bundled third-party skills ship their upstream LICENSE alongside SKILL.md.
+	if _, err := os.Stat(filepath.Join(claudeSkills, "grill-me", "LICENSE")); err != nil {
+		t.Errorf("grill-me/LICENSE not deployed: %v", err)
+	}
+
 	// No .agents/ directory for claude target
 	if _, err := os.Stat(filepath.Join(dir, ".agents")); err == nil {
 		t.Error(".agents/ should not be created for claude target")

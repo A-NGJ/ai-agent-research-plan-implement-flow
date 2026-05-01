@@ -90,7 +90,10 @@ func backupAndWrite(dest string, newData []byte) (written, backedUp bool, err er
 
 // InstallSkills copies embedded skills to skillsDir as Agent Skills-compliant
 // SKILL.md files. For non-agents-only targets, tool-specific frontmatter
-// (model, etc.) is injected into the installed copies.
+// (model, etc.) is injected into the installed SKILL.md copies. Any sibling
+// files in a skill source dir (e.g. an upstream LICENSE for bundled
+// third-party skills) are copied verbatim so attribution travels with each
+// deployed copy.
 // Existing files that differ are backed up to .bak before overwriting.
 func InstallSkills(skillsDir string, target Target) (installed int, backedUp int, err error) {
 	entries, readErr := fs.ReadDir(assets, "assets/skills")
@@ -103,32 +106,47 @@ func InstallSkills(skillsDir string, target Target) (installed int, backedUp int
 			continue
 		}
 		skillName := entry.Name()
-		srcPath := "assets/skills/" + skillName + "/SKILL.md"
+		srcDir := "assets/skills/" + skillName
 
-		data, readErr := assets.ReadFile(srcPath)
+		files, readErr := fs.ReadDir(assets, srcDir)
 		if readErr != nil {
-			return installed, backedUp, fmt.Errorf("read %s: %w", srcPath, readErr)
+			return installed, backedUp, fmt.Errorf("read %s: %w", srcDir, readErr)
 		}
 
-		if target != TargetAgentsOnly {
-			if overrides, ok := skillOverrides[skillName]; ok {
-				data = injectFrontmatter(data, overrides, target)
+		destDir := filepath.Join(skillsDir, skillName)
+		if mkErr := os.MkdirAll(destDir, 0755); mkErr != nil {
+			return installed, backedUp, fmt.Errorf("create %s: %w", destDir, mkErr)
+		}
+
+		for _, f := range files {
+			if f.IsDir() {
+				continue
 			}
-		}
+			fileName := f.Name()
+			srcPath := srcDir + "/" + fileName
 
-		dest := filepath.Join(skillsDir, skillName, "SKILL.md")
-		if mkErr := os.MkdirAll(filepath.Dir(dest), 0755); mkErr != nil {
-			return installed, backedUp, fmt.Errorf("create %s: %w", filepath.Dir(dest), mkErr)
-		}
-		written, backed, writeErr := backupAndWrite(dest, data)
-		if writeErr != nil {
-			return installed, backedUp, writeErr
-		}
-		if written {
-			installed++
-		}
-		if backed {
-			backedUp++
+			data, readErr := assets.ReadFile(srcPath)
+			if readErr != nil {
+				return installed, backedUp, fmt.Errorf("read %s: %w", srcPath, readErr)
+			}
+
+			if fileName == "SKILL.md" && target != TargetAgentsOnly {
+				if overrides, ok := skillOverrides[skillName]; ok {
+					data = injectFrontmatter(data, overrides, target)
+				}
+			}
+
+			dest := filepath.Join(destDir, fileName)
+			written, backed, writeErr := backupAndWrite(dest, data)
+			if writeErr != nil {
+				return installed, backedUp, writeErr
+			}
+			if written {
+				installed++
+			}
+			if backed {
+				backedUp++
+			}
 		}
 	}
 

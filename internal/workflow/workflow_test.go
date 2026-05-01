@@ -370,6 +370,46 @@ func TestInstallSkills_SkipsIdenticalFiles(t *testing.T) {
 	}
 }
 
+func TestInstallSkills_CopiesSiblingFiles(t *testing.T) {
+	// Bundled third-party skills (e.g. grill-me) ship a LICENSE file alongside
+	// SKILL.md. InstallSkills must copy every regular file in each skill source
+	// dir so the upstream attribution travels with each deployed copy, across
+	// all targets.
+	for _, target := range []Target{TargetAgentsOnly, TargetClaude, TargetOpenCode} {
+		t.Run(string(target), func(t *testing.T) {
+			skillsDir := filepath.Join(t.TempDir(), "skills")
+			if _, _, err := InstallSkills(skillsDir, target); err != nil {
+				t.Fatalf("InstallSkills(%s): %v", target, err)
+			}
+
+			licensePath := filepath.Join(skillsDir, "grill-me", "LICENSE")
+			data, err := os.ReadFile(licensePath)
+			if err != nil {
+				t.Fatalf("grill-me/LICENSE not deployed for target %s: %v", target, err)
+			}
+			if !strings.Contains(string(data), "Matt Pocock") {
+				t.Errorf("grill-me/LICENSE missing upstream attribution for target %s", target)
+			}
+			if !strings.Contains(string(data), "MIT License") {
+				t.Errorf("grill-me/LICENSE missing MIT notice for target %s", target)
+			}
+
+			// Skills with no sibling files should not get extras (regression check).
+			researchEntries, err := os.ReadDir(filepath.Join(skillsDir, "rpi-research"))
+			if err != nil {
+				t.Fatalf("read rpi-research dir: %v", err)
+			}
+			if len(researchEntries) != 1 {
+				names := make([]string, 0, len(researchEntries))
+				for _, e := range researchEntries {
+					names = append(names, e.Name())
+				}
+				t.Errorf("rpi-research should only contain SKILL.md, got %d entries: %v", len(researchEntries), names)
+			}
+		})
+	}
+}
+
 // --- injectFrontmatter tests ---
 
 func TestInjectFrontmatter_AddsFields(t *testing.T) {

@@ -318,6 +318,11 @@ func TestUpdatePreservesExistingCommandsDir(t *testing.T) {
 	if len(entries) != 10 {
 		t.Errorf("expected 10 skill dirs in .claude/skills/, got %d", len(entries))
 	}
+
+	// Bundled third-party LICENSE files survive update.
+	if _, err := os.Stat(filepath.Join(dir, ".claude", "skills", "grill-me", "LICENSE")); err != nil {
+		t.Errorf("grill-me/LICENSE not deployed by update: %v", err)
+	}
 }
 
 func TestUpdateSyncsAgents(t *testing.T) {
