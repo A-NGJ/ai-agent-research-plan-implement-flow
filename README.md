@@ -190,6 +190,10 @@ The warmup is a one-time cost (qmd caches models in `~/.cache/qmd/models/`). Sub
 
 Inspired by [HumanLayer](https://github.com/humanlayer/humanlayer) -- their work on human-in-the-loop patterns for AI agents informed the design of this workflow.
 
+## Credits
+
+RPI bundles the [`grill-me`](https://github.com/mattpocock/skills/blob/main/skills/productivity/grill-me/SKILL.md) skill by Matt Pocock under the MIT license. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the full attribution.
+
 ## License
 
 MIT
