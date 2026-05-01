@@ -12,11 +12,13 @@ import (
 // --- Agent Skills format compliance tests ---
 
 func TestAllSkillsPresent(t *testing.T) {
-	// AS-12: All 9 pipeline skills must be present
+	// AS-12: All 11 skills must be present (10 first-party pipeline skills +
+	// 1 bundled third-party skill: grill-me from mattpocock/skills under MIT).
 	expected := []string{
 		"rpi-research", "rpi-propose", "rpi-plan", "rpi-implement",
 		"rpi-verify", "rpi-diagnose", "rpi-explain", "rpi-commit", "rpi-archive",
 		"rpi-spec-sync",
+		"grill-me",
 	}
 
 	entries, err := fs.ReadDir(assets, "assets/skills")
@@ -137,17 +139,18 @@ func TestInstallSkills_AgentsOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("InstallSkills error: %v", err)
 	}
-	if count != 10 {
-		t.Errorf("expected 10 files installed, got %d", count)
+	// 10 first-party SKILL.md + grill-me's SKILL.md + grill-me's LICENSE = 12.
+	if count != 12 {
+		t.Errorf("expected 12 files installed, got %d", count)
 	}
 
-	// Verify all 9 canonical skills exist
+	// Verify all 11 canonical skill dirs exist (10 first-party + grill-me).
 	entries, err := os.ReadDir(skillsDir)
 	if err != nil {
 		t.Fatalf("read skills dir: %v", err)
 	}
-	if len(entries) != 10 {
-		t.Errorf("expected 10 skill dirs, got %d", len(entries))
+	if len(entries) != 11 {
+		t.Errorf("expected 11 skill dirs, got %d", len(entries))
 	}
 
 	// Verify canonical files have no tool-specific fields
@@ -173,8 +176,9 @@ func TestInstallSkills_Claude(t *testing.T) {
 	if err != nil {
 		t.Fatalf("InstallSkills error: %v", err)
 	}
-	if count != 10 {
-		t.Errorf("expected 10 files installed, got %d", count)
+	// 10 first-party SKILL.md + grill-me's SKILL.md + grill-me's LICENSE = 12.
+	if count != 12 {
+		t.Errorf("expected 12 files installed, got %d", count)
 	}
 
 	// Verify rpi-archive has model and disable-model-invocation

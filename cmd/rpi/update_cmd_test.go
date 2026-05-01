@@ -310,13 +310,13 @@ func TestUpdatePreservesExistingCommandsDir(t *testing.T) {
 		t.Error(".claude/commands/rpi-propose.md was modified (AS-13)")
 	}
 
-	// .claude/skills/ should have new skills
+	// .claude/skills/ should have new skills (10 first-party + grill-me).
 	entries, err := os.ReadDir(filepath.Join(dir, ".claude", "skills"))
 	if err != nil {
 		t.Fatalf("read .claude/skills/: %v", err)
 	}
-	if len(entries) != 10 {
-		t.Errorf("expected 10 skill dirs in .claude/skills/, got %d", len(entries))
+	if len(entries) != 11 {
+		t.Errorf("expected 11 skill dirs in .claude/skills/, got %d", len(entries))
 	}
 
 	// Bundled third-party LICENSE files survive update.
@@ -405,13 +405,13 @@ func TestUpdateDetectsAgentsOnlyTarget(t *testing.T) {
 		t.Fatalf("update error: %v", err)
 	}
 
-	// Should still have 9 skills
+	// Should still have 11 skills (10 first-party + grill-me).
 	entries, err := os.ReadDir(filepath.Join(dir, ".agents", "skills"))
 	if err != nil {
 		t.Fatalf("read .agents/skills/: %v", err)
 	}
-	if len(entries) != 10 {
-		t.Errorf("expected 10 skill dirs, got %d", len(entries))
+	if len(entries) != 11 {
+		t.Errorf("expected 11 skill dirs, got %d", len(entries))
 	}
 
 	// No tool-specific dirs should be created
