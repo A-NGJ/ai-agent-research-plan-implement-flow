@@ -15,14 +15,14 @@ func resetSearchFlags(t *testing.T) func() {
 	t.Helper()
 	origType := searchType
 	origLimit := searchLimit
-	origInclude := searchIncludeArchive
+	origInclude := searchExcludeArchive
 	origMin := searchMinScore
 	origWarmup := searchWarmup
 	origQueryFn := searchQueryFn
 	return func() {
 		searchType = origType
 		searchLimit = origLimit
-		searchIncludeArchive = origInclude
+		searchExcludeArchive = origInclude
 		searchMinScore = origMin
 		searchWarmup = origWarmup
 		searchQueryFn = origQueryFn
@@ -53,7 +53,7 @@ func TestSearchFlagsMarshalIntoParams(t *testing.T) {
 
 	searchType = "design"
 	searchLimit = 10
-	searchIncludeArchive = true
+	searchExcludeArchive = true
 	searchMinScore = 0.6
 
 	if err := runSearch(searchCmd, []string{"my query"}); err != nil {
@@ -69,8 +69,8 @@ func TestSearchFlagsMarshalIntoParams(t *testing.T) {
 	if captured.Limit != 10 {
 		t.Errorf("Limit: got %d, want 10", captured.Limit)
 	}
-	if !captured.IncludeArchive {
-		t.Error("IncludeArchive: got false, want true")
+	if !captured.ExcludeArchive {
+		t.Error("ExcludeArchive: got false, want true")
 	}
 	if captured.MinScore != 0.6 {
 		t.Errorf("MinScore: got %v, want 0.6", captured.MinScore)

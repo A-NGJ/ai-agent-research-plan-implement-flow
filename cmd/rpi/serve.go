@@ -351,7 +351,7 @@ type searchInput struct {
 	Query          string  `json:"query" jsonschema:"natural-language search query"`
 	Type           string  `json:"type,omitempty" jsonschema:"filter by artifact type (research, design, plan, spec, diagnosis, review)"`
 	Limit          int     `json:"limit,omitempty" jsonschema:"maximum hits to return (default 5, max 20)"`
-	IncludeArchive bool    `json:"include_archive,omitempty" jsonschema:"include archived artifacts in results"`
+	ExcludeArchive bool    `json:"exclude_archive,omitempty" jsonschema:"exclude archived artifacts from results (archive is included by default)"`
 	MinScore       float64 `json:"min_score,omitempty" jsonschema:"minimum relevance score (0.0-1.0)"`
 }
 
@@ -614,7 +614,7 @@ func handleSearch(ctx context.Context, _ *mcp.CallToolRequest, input searchInput
 		Query:          input.Query,
 		Type:           input.Type,
 		Limit:          input.Limit,
-		IncludeArchive: input.IncludeArchive,
+		ExcludeArchive: input.ExcludeArchive,
 		MinScore:       input.MinScore,
 	}, search.QueryOptions{})
 	return jsonResult(resp)

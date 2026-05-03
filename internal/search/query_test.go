@@ -233,7 +233,7 @@ func TestQueryLimitHonored(t *testing.T) {
 	}
 }
 
-func TestQueryArchiveExcludedByDefault(t *testing.T) {
+func TestQueryArchiveIncludedByDefault(t *testing.T) {
 	daemon := &fakeDaemon{
 		raw: json.RawMessage(`[
 			{"path":".rpi/designs/active.md","title":"a","score":0.9,"snippet":"x"},
@@ -244,17 +244,12 @@ func TestQueryArchiveExcludedByDefault(t *testing.T) {
 		SearchParams{Query: "test"},
 		QueryOptions{Pipeline: readyPipeline(), Daemon: daemon})
 
-	if len(resp.Hits) != 1 {
-		t.Fatalf("expected 1 hit (archive excluded), got %d", len(resp.Hits))
-	}
-	for _, h := range resp.Hits {
-		if isArchivePath(h.Path) {
-			t.Errorf("unexpected archive hit when IncludeArchive=false: %s", h.Path)
-		}
+	if len(resp.Hits) != 2 {
+		t.Fatalf("expected both hits when archive included by default, got %d", len(resp.Hits))
 	}
 }
 
-func TestQueryArchiveIncludedOnRequest(t *testing.T) {
+func TestQueryArchiveExcludedOnRequest(t *testing.T) {
 	daemon := &fakeDaemon{
 		raw: json.RawMessage(`[
 			{"path":".rpi/designs/active.md","title":"a","score":0.9,"snippet":"x"},
@@ -262,11 +257,16 @@ func TestQueryArchiveIncludedOnRequest(t *testing.T) {
 		]`),
 	}
 	resp := Query(context.Background(), "/repo/.rpi",
-		SearchParams{Query: "test", IncludeArchive: true},
+		SearchParams{Query: "test", ExcludeArchive: true},
 		QueryOptions{Pipeline: readyPipeline(), Daemon: daemon})
 
-	if len(resp.Hits) != 2 {
-		t.Fatalf("expected both hits when archive included, got %d", len(resp.Hits))
+	if len(resp.Hits) != 1 {
+		t.Fatalf("expected 1 hit (archive excluded), got %d", len(resp.Hits))
+	}
+	for _, h := range resp.Hits {
+		if isArchivePath(h.Path) {
+			t.Errorf("unexpected archive hit when ExcludeArchive=true: %s", h.Path)
+		}
 	}
 }
 

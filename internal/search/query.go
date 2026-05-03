@@ -262,7 +262,7 @@ func inferType(path string) string {
 func filterHits(hits []Hit, params SearchParams) []Hit {
 	out := make([]Hit, 0, len(hits))
 	for _, h := range hits {
-		if !params.IncludeArchive && isArchivePath(h.Path) {
+		if params.ExcludeArchive && isArchivePath(h.Path) {
 			continue
 		}
 		if params.Type != "" && h.Type != params.Type {

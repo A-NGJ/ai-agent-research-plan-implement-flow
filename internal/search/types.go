@@ -40,7 +40,7 @@ type SearchParams struct {
 	Query          string  `json:"query"`
 	Type           string  `json:"type,omitempty"`
 	Limit          int     `json:"limit,omitempty"`
-	IncludeArchive bool    `json:"include_archive,omitempty"`
+	ExcludeArchive bool    `json:"exclude_archive,omitempty"`
 	MinScore       float64 `json:"min_score,omitempty"`
 }
 

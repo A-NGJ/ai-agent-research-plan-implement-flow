@@ -15,7 +15,7 @@ import (
 var (
 	searchType           string
 	searchLimit          int
-	searchIncludeArchive bool
+	searchExcludeArchive bool
 	searchMinScore       float64
 	searchWarmup         bool
 )
@@ -49,7 +49,7 @@ func init() {
 	addRpiDirFlag(searchCmd)
 	searchCmd.Flags().StringVar(&searchType, "type", "", "Filter by artifact type (research, design, plan, spec, diagnosis, review)")
 	searchCmd.Flags().IntVar(&searchLimit, "limit", 0, "Maximum number of hits (default 5, max 20)")
-	searchCmd.Flags().BoolVar(&searchIncludeArchive, "include-archive", false, "Include archived artifacts in results")
+	searchCmd.Flags().BoolVar(&searchExcludeArchive, "exclude-archive", false, "Exclude archived artifacts from results (archive is included by default)")
 	searchCmd.Flags().Float64Var(&searchMinScore, "min-score", 0, "Minimum relevance score (0.0-1.0)")
 	searchCmd.Flags().BoolVar(&searchWarmup, "warmup", false, "Spawn the qmd MCP daemon and download models (one-time setup)")
 	rootCmd.AddCommand(searchCmd)
@@ -73,7 +73,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		Query:          args[0],
 		Type:           searchType,
 		Limit:          searchLimit,
-		IncludeArchive: searchIncludeArchive,
+		ExcludeArchive: searchExcludeArchive,
 		MinScore:       searchMinScore,
 	}, search.QueryOptions{})
 
