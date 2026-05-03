@@ -13,9 +13,11 @@ Create git commits for changes in the working tree with user approval. This incl
 
 - Gather consolidated git context first: branch, status, diff summary, recent commits
 - Scan staged files for sensitive content (.env, credentials, secrets, API keys) — warn and exclude unless explicitly told otherwise
+- Scan candidate files against `.gitignore` rules — warn and exclude any matches (commonly: a file tracked before being added to .gitignore) unless explicitly told to keep it
 - If the working tree is clean, inform the user and stop — no empty commits
 - Group related files into logical, focused commits — prefer smaller over monolithic
 - Draft commit messages in imperative mood, matching the repo's existing commit style; fall back to commitizen convention if no style detected
+- Cap each commit message at 50 words total (subject + body); if a draft exceeds the cap, condense before presenting for approval
 - Present the commit plan (files to stage + commit message for each) and ask for approval before executing
 - Stage specific files with `git add <file>` — never use `-A` or `.`
 - Use HEREDOC for commit messages to handle special characters safely
