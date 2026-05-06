@@ -1,6 +1,6 @@
 ---
 name: rpi-diagnose
-description: Diagnose bugs through iterative root-cause analysis and fix attempts
+description: Diagnose a bug iteratively: reproduce, find root cause, attempt up to 3 fixes, produce a diagnosis artifact. Use when user says 'why is X not working?', 'X is broken', 'after Y, I see Z fail', or reports broken behavior, even if they don't say 'diagnose'. Do NOT invoke for understanding working code (use rpi-research).
 ---
 
 # Diagnose Bug

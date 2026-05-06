@@ -1,6 +1,6 @@
 ---
 name: rpi-propose
-description: Investigate, analyze, and propose solutions — from quick decisions to complex features
+description: Design a new feature or non-trivial change with tradeoffs — produce a design and behavioral spec. Use when user says 'add feature X', 'introduce mode Y', 'support Z', or proposes new functionality, even if they don't say 'propose'. Do NOT invoke for narrow tweaks (use rpi-plan) or open-ended exploration (use rpi-research).
 ---
 
 # Solution Design

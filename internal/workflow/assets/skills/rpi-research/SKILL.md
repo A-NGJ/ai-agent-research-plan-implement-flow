@@ -1,6 +1,6 @@
 ---
 name: rpi-research
-description: Research the codebase to understand problems before proposing solutions
+description: Explore the codebase to understand how something works. Use when user says 'how does X work?', 'how could X be improved?', 'investigate Y', or 'explore Z', even if they don't say 'research'. Do NOT invoke for broken behavior (use rpi-diagnose) or concrete changes with tradeoffs (use rpi-propose).
 ---
 
 # Codebase Research
