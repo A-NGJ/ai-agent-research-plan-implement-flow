@@ -1,6 +1,6 @@
 ---
 name: rpi-explain
-description: Explain an implemented solution with a diff-scoped walkthrough
+description: Walk through a recent diff and explain what changed and why, focusing on non-obvious decisions. Use when user says 'explain the changes', 'walk me through the diff', 'what did we just do?', or 'explain how <feature> was implemented'.
 ---
 
 # Explain Implementation

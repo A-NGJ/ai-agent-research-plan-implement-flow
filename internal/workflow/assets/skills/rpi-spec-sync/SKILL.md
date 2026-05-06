@@ -1,6 +1,6 @@
 ---
 name: rpi-spec-sync
-description: Sync specs to match the current codebase — detect drift, rewrite scenarios, rename, merge, or archive obsolete specs
+description: Detect spec drift and sync .rpi/specs/ to the current codebase — rewrite, rename, merge, or archive obsolete specs. Use when user says 'sync the specs', 'the spec is stale', 'specs need updating', or 'clean up old specs'.
 ---
 
 # Spec Sync

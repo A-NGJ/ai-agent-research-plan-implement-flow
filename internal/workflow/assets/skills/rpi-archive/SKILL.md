@@ -1,6 +1,6 @@
 ---
 name: rpi-archive
-description: Archive completed artifacts to keep .rpi/ directory clean
+description: Move completed or superseded .rpi/ artifacts to .rpi/archive/ with reference checks and frontmatter updates. Use when user says 'archive these artifacts', 'clean up .rpi/', or 'archive completed work'.
 ---
 
 # Archive Artifacts

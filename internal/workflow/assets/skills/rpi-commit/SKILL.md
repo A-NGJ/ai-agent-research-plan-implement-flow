@@ -1,6 +1,6 @@
 ---
 name: rpi-commit
-description: Create git commits with user approval and no Claude attribution
+description: Create git commits for the current working tree with user approval, sensitive-content scan, and gitignore enforcement. Use when user says 'commit this', 'commit the changes', 'make a commit', or 'let's commit what we have'.
 ---
 
 # Commit Changes

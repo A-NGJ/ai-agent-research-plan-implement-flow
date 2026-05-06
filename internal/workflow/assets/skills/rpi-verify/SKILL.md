@@ -1,6 +1,6 @@
 ---
 name: rpi-verify
-description: Verify implementation against design artifacts for completeness, correctness, and coherence
+description: Verify an implementation against its design and spec across completeness, correctness, and coherence — produce a severity-classified review. Use when user says 'verify the implementation', 'check the implementation matches the design', or 'review what I just shipped'.
 ---
 
 # Verify Implementation

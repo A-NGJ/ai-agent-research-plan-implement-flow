@@ -1,6 +1,6 @@
 ---
 name: rpi-implement
-description: Implement technical plans from .rpi/plans with verification
+description: Execute an approved plan from .rpi/plans phase by phase with TDD and per-phase verification. Use when user says 'implement the plan', 'start implementing', 'run the next phase', or just approved a plan.
 ---
 
 # Implement Plan
