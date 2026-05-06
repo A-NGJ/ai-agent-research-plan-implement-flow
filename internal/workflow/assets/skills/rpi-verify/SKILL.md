@@ -14,7 +14,7 @@ If no path provided, auto-detect from recent git changes. If artifacts found, an
 ## Invariants
 
 - Resolve the artifact chain from the provided or detected artifact — read all linked files (plan → design → research)
-- After resolving the chain, search for prior verify-reports covering the same area — prefer semantic search when available (default relevance threshold ~0.4), and fall back to keyword-based artifact discovery when not. Read snippets first. Use prior reports as historical context (was this area flagged before? what severity?), not as a source of new specs to check (cross-spec coverage is `/rpi-spec-sync`'s job). If semantic search reports an installed-but-failing state, surface its hint before falling back.
+- After resolving the chain, search for prior verify-reports covering the same area — prefer semantic search when available (default relevance threshold ~0.4), and fall back to keyword-based artifact discovery when not. Read snippets first. Use prior reports as historical context (was this area flagged before? what severity?), not as a source of new specs to check (cross-spec coverage is `/rpi-spec-sync`'s job). If semantic search reports an installed-but-failing state, run the recovery command from its hint and retry once; only fall back to keyword discovery (and surface the hint) if the retry still fails.
 - Check `.rpi/specs/` for relevant specs and get the list of changed files
 - Read actual implementation files — never trust summaries or checkboxes
 - **Completeness**: check all plan phases/tasks done, tests exist, all planned files created/modified, scan for TODO/FIXME/HACK markers

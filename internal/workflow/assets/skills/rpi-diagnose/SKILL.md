@@ -16,7 +16,7 @@ When the bug is fixed, announce completion and suggest → `/rpi-commit` to comm
 ## Invariants
 
 - Always interview before investigating — ask 1-2 clarifying questions to establish expected vs actual behavior
-- Before opening a new diagnosis, search for prior diagnoses on the same topic — prefer semantic search when available (default relevance threshold ~0.4), and fall back to keyword-based artifact discovery when not. Read snippets; if a hit covers the same root cause, ask the user whether to extend that diagnosis instead of opening a new one. If semantic search reports an installed-but-failing state, surface its hint before falling back.
+- Before opening a new diagnosis, search for prior diagnoses on the same topic — prefer semantic search when available (default relevance threshold ~0.4), and fall back to keyword-based artifact discovery when not. Read snippets; if a hit covers the same root cause, ask the user whether to extend that diagnosis instead of opening a new one. If semantic search reports an installed-but-failing state, run the recovery command from its hint and retry once; only fall back to keyword discovery (and surface the hint) if the retry still fails.
 - Reproduce the bug before investigating root cause — run the failing test, trigger the error, or confirm the symptom is observable; if unreproducible, checkpoint with user
 - Trace the code path from symptom to root cause — all findings must include file:line references
 - Do not propose a fix until root cause is identified

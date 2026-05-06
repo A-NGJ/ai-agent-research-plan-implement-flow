@@ -23,7 +23,7 @@ When the user approves the spec, suggest → `/rpi-plan <design-path>`.
 
 ## Invariants
 
-- Before drafting, search for prior designs (and optionally specs) on this topic — prefer semantic search when available (default relevance threshold ~0.4), and fall back to keyword-based artifact discovery when not. Read snippets first. For high-relevance hits (score ≥ 0.7), expand the artifact chain to see lineage. Decide whether the new design supersedes or extends prior work; if extending, link via frontmatter. If semantic search reports an installed-but-failing state, surface its hint before falling back.
+- Before drafting, search for prior designs (and optionally specs) on this topic — prefer semantic search when available (default relevance threshold ~0.4), and fall back to keyword-based artifact discovery when not. Read snippets first. For high-relevance hits (score ≥ 0.7), expand the artifact chain to see lineage. Decide whether the new design supersedes or extends prior work; if extending, link via frontmatter. If semantic search reports an installed-but-failing state, run the recovery command from its hint and retry once; only fall back to keyword discovery (and surface the hint) if the retry still fails.
 - If a research doc is provided, read it and resolve its full artifact chain — warn if still draft or already complete
 - Investigate the codebase before proposing — ground decisions in evidence with file:line refs
 - Get user buy-in on trade-offs before writing the design
