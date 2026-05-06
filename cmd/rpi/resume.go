@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
+	"text/tabwriter"
 
 	"github.com/A-NGJ/rpi/internal/frontmatter"
 	"github.com/A-NGJ/rpi/internal/scanner"
@@ -41,14 +43,22 @@ var resumeCmd = &cobra.Command{
 
 Lists all active and draft artifacts, shows the current implementation
 context for the most recent active plan, and suggests the next pipeline
-action. Designed for session start to quickly restore context.`,
-	Example: `  rpi resume`,
-	Args:    cobra.NoArgs,
-	RunE:    runResume,
+action. Designed for session start to quickly restore context.
+
+Default output is a human-readable text summary. Use --format json for
+the structured JSON shape consumed by the rpi_session_resume MCP tool.`,
+	Example: `  # Human-readable summary
+  rpi resume
+
+  # Structured JSON (script-friendly, same shape as the MCP tool)
+  rpi resume --format json`,
+	Args: cobra.NoArgs,
+	RunE: runResume,
 }
 
 func init() {
 	addRpiDirFlag(resumeCmd)
+	addFormatFlag(resumeCmd)
 	rootCmd.AddCommand(resumeCmd)
 }
 
@@ -58,12 +68,114 @@ func runResume(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := json.MarshalIndent(result, "", "  ")
+	format := formatFlag
+	if format == "" {
+		format = "text"
+	}
+
+	switch format {
+	case "text":
+		return renderResumeText(cmd, result)
+	case "json":
+		return renderResumeJSON(cmd, result)
+	default:
+		return fmt.Errorf("unknown format: %s (expected text or json)", format)
+	}
+}
+
+func renderResumeJSON(cmd *cobra.Command, r *ResumeResult) error {
+	data, err := json.MarshalIndent(r, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal result: %w", err)
 	}
-	fmt.Println(string(data))
+	fmt.Fprintln(cmd.OutOrStdout(), string(data))
 	return nil
+}
+
+// resumeArtifactTypeOrder is the canonical type order for the Artifacts section.
+var resumeArtifactTypeOrder = []string{"design", "diagnosis", "plan", "research"}
+
+func renderResumeText(cmd *cobra.Command, r *ResumeResult) error {
+	if len(r.Artifacts) == 0 && r.ActivePlan == nil {
+		fmt.Fprintln(cmd.OutOrStdout(), "No active work — start with /rpi-propose <topic>")
+		return nil
+	}
+
+	w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
+	sectionWritten := false
+
+	if len(r.Artifacts) > 0 {
+		fmt.Fprintln(w, "Artifacts")
+		grouped := make(map[string][]ResumeArtifact)
+		for _, a := range r.Artifacts {
+			grouped[a.Type] = append(grouped[a.Type], a)
+		}
+		seen := make(map[string]bool)
+		for _, typ := range resumeArtifactTypeOrder {
+			if rows, ok := grouped[typ]; ok {
+				writeArtifactRows(w, rows)
+				seen[typ] = true
+			}
+		}
+		// Include any types not in the canonical order, sorted for determinism.
+		var extra []string
+		for typ := range grouped {
+			if !seen[typ] {
+				extra = append(extra, typ)
+			}
+		}
+		sort.Strings(extra)
+		for _, typ := range extra {
+			writeArtifactRows(w, grouped[typ])
+		}
+		sectionWritten = true
+	}
+
+	if r.ActivePlan != nil {
+		if sectionWritten {
+			fmt.Fprintln(w)
+		}
+		fmt.Fprintln(w, "Active Plan")
+		fmt.Fprintf(w, "  %s\n", r.ActivePlan.Topic)
+		progress := ""
+		if r.ActivePlan.Progress.Total > 0 {
+			pct := r.ActivePlan.Progress.Checked * 100 / r.ActivePlan.Progress.Total
+			progress = fmt.Sprintf("\t%d/%d (%d%%)", r.ActivePlan.Progress.Checked, r.ActivePlan.Progress.Total, pct)
+		}
+		phase := r.ActivePlan.CurrentPhase
+		if phase == "" {
+			phase = "(no phase)"
+		}
+		fmt.Fprintf(w, "  %s%s\n", phase, progress)
+		for _, item := range r.ActivePlan.NextItems {
+			fmt.Fprintf(w, "  Next:\t%s\n", item)
+		}
+		sectionWritten = true
+	}
+
+	if r.Suggestion != nil {
+		if sectionWritten {
+			fmt.Fprintln(w)
+		}
+		fmt.Fprintln(w, "Suggestion")
+		fmt.Fprintf(w, "  Action:\t%s\n", r.Suggestion.Action)
+		fmt.Fprintf(w, "  Why:\t%s\n", r.Suggestion.Reasoning)
+		if r.Suggestion.Artifact != "" {
+			fmt.Fprintf(w, "  Artifact:\t%s\n", r.Suggestion.Artifact)
+		}
+	}
+
+	return w.Flush()
+}
+
+func writeArtifactRows(w *tabwriter.Writer, rows []ResumeArtifact) {
+	for _, a := range rows {
+		topic := a.Topic
+		if topic == "" {
+			topic = "-"
+		}
+		fmt.Fprintf(w, "  %s\t%s\t%s\t%s\n", a.Type, a.Status, topic, a.Path)
+	}
 }
 
 // assembleResume builds a session-level overview: active artifacts, plan

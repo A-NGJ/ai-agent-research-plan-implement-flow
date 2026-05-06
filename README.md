@@ -110,6 +110,8 @@ Not sure where to start? Use `/rpi-research` with any question -- it handles bot
 
 Not sure what's in flight? Run `rpi status` for a single-screen dashboard of all artifacts, progress, and what's ready to archive.
 
+Coming back to a project after a break? Run `rpi resume` -- or just ask the AI "where did I leave my work?" -- for a session-level overview: active and draft artifacts, the current phase and next unchecked items of the most recent active plan, and a suggested next pipeline action. The default output is a readable text summary; pass `--format json` for the same structured shape the `rpi_session_resume` MCP tool returns. Claude Code calls this automatically on session start (via the MCP tool and a `SessionStart` hook) so the assistant orients itself before you type.
+
 <details>
 <summary><code>rpi status</code> example output</summary>
 

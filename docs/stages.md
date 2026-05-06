@@ -151,3 +151,19 @@ rpi status                  # text dashboard
 rpi status --format json    # machine-readable output
 rpi status --stale-days 7   # flag artifacts stale after 7 days
 ```
+
+## Resume (`rpi resume`)
+
+**Purpose:** Session-level overview to answer "where did I leave my work?" after returning to a project.
+
+Shows:
+- Active and draft artifacts across all types (path, type, status, topic)
+- Current phase, checkbox progress, and the next unchecked items of the most recent active plan
+- A suggested next pipeline action (e.g., "design has no implementation plan -- run /rpi-plan")
+
+```bash
+rpi resume                  # human-readable text summary (default)
+rpi resume --format json    # structured JSON (same shape as the MCP tool)
+```
+
+Also exposed as the `rpi_session_resume` MCP tool. Claude Code's `rpi init` wires a `SessionStart` hook that prompts the assistant to call it automatically, so the AI orients itself on the in-flight work before you type. You can invoke it manually any time by running `rpi resume` or by asking the AI something like "where did I leave my work?".
