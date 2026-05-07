@@ -333,7 +333,7 @@ func TestPromptStructure_NoToolReferences(t *testing.T) {
 			t.Errorf("read %s: %v", e.Name(), err)
 			continue
 		}
-		content := string(data)
+		content := stripBootstrapPreamble(string(data))
 		if strings.Contains(content, "rpi_") {
 			t.Errorf("%s contains MCP tool name reference (rpi_)", e.Name())
 		}
@@ -341,6 +341,74 @@ func TestPromptStructure_NoToolReferences(t *testing.T) {
 			t.Errorf("%s contains backtick-quoted rpi CLI invocation", e.Name())
 		}
 	}
+}
+
+// TestRPISkillsContainBootstrapPreamble enforces that every rpi-* skill
+// invokes rpi bootstrap from its prompt body so a global install can
+// auto-init project artifacts on first use. grill-me is third-party and
+// must remain untouched.
+func TestRPISkillsContainBootstrapPreamble(t *testing.T) {
+	entries, err := fs.ReadDir(assets, "assets/skills")
+	if err != nil {
+		t.Fatalf("read assets/skills: %v", err)
+	}
+
+	const marker = "rpi bootstrap"
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		data, err := assets.ReadFile("assets/skills/" + name + "/SKILL.md")
+		if err != nil {
+			t.Errorf("read %s: %v", name, err)
+			continue
+		}
+		body := extractBody(string(data))
+		bodyLines := strings.Split(body, "\n")
+		// Look in the first 5 non-empty body lines so the preamble is
+		// surfaced before any other skill instructions.
+		var early []string
+		for _, line := range bodyLines {
+			trimmed := strings.TrimSpace(line)
+			if trimmed == "" {
+				continue
+			}
+			early = append(early, trimmed)
+			if len(early) == 5 {
+				break
+			}
+		}
+		joined := strings.Join(early, "\n")
+		hasMarker := strings.Contains(joined, marker)
+
+		if strings.HasPrefix(name, "rpi-") {
+			if !hasMarker {
+				t.Errorf("%s missing rpi bootstrap preamble in first 5 body lines:\n%s", name, joined)
+			}
+		} else {
+			// Non-rpi-* skills (e.g. grill-me) must not pick up the
+			// preamble accidentally.
+			if hasMarker {
+				t.Errorf("%s should not contain rpi bootstrap preamble (third-party skill)", name)
+			}
+		}
+	}
+}
+
+// stripBootstrapPreamble removes the bootstrap preamble line so the
+// no-tool-reference policy can stay strict for the rest of every skill
+// prompt. The preamble is the one explicitly permitted CLI invocation.
+func stripBootstrapPreamble(content string) string {
+	lines := strings.Split(content, "\n")
+	out := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if strings.HasPrefix(line, "> Before doing anything else, run `rpi bootstrap`") {
+			continue
+		}
+		out = append(out, line)
+	}
+	return strings.Join(out, "\n")
 }
 
 // --- InstallAgents tests ---

@@ -69,7 +69,7 @@ rpi init --global --target opencode              # ~/.config/opencode/
 rpi update --global                              # refresh the global install
 ```
 
-`--global` only writes to your user config directory — no `.rpi/`, `CLAUDE.md`, or `.gitignore` is touched at the user level, and your working directory is unchanged. See [docs/rpi-init.md](docs/rpi-init.md) for the full layout and conflict matrix.
+`--global` only writes to your user config directory — no `.rpi/`, `CLAUDE.md`, or `.gitignore` is touched at the user level, and your working directory is unchanged. After global setup, the first `/rpi-*` skill you invoke in a project auto-initializes `.rpi/` at the git root — no per-project `rpi init` required. See [docs/rpi-init.md](docs/rpi-init.md) for the full layout, conflict matrix, and auto-bootstrap semantics.
 
 ### Try it
 

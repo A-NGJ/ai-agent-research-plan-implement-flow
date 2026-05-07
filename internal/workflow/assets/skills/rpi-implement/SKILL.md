@@ -3,6 +3,8 @@ name: rpi-implement
 description: Execute an approved plan from .rpi/plans phase by phase with TDD and per-phase verification. Use when user says 'implement the plan', 'start implementing', 'run the next phase', or just approved a plan.
 ---
 
+> Before doing anything else, run `rpi bootstrap` (silent and idempotent — initializes `.rpi/` if a global install is present and the project hasn't been bootstrapped yet).
+
 # Implement Plan
 
 ## Goal

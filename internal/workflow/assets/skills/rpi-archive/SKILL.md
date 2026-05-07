@@ -3,6 +3,8 @@ name: rpi-archive
 description: Move completed or superseded .rpi/ artifacts to .rpi/archive/ with reference checks and frontmatter updates. Use when user says 'archive these artifacts', 'clean up .rpi/', or 'archive completed work'.
 ---
 
+> Before doing anything else, run `rpi bootstrap` (silent and idempotent — initializes `.rpi/` if a global install is present and the project hasn't been bootstrapped yet).
+
 # Archive Artifacts
 
 ## Goal

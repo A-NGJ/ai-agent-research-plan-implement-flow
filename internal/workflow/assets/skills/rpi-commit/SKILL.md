@@ -3,6 +3,8 @@ name: rpi-commit
 description: Create git commits for the current working tree with user approval, sensitive-content scan, and gitignore enforcement. Use when user says 'commit this', 'commit the changes', 'make a commit', or 'let's commit what we have'.
 ---
 
+> Before doing anything else, run `rpi bootstrap` (silent and idempotent — initializes `.rpi/` if a global install is present and the project hasn't been bootstrapped yet).
+
 # Commit Changes
 
 ## Goal

@@ -3,6 +3,8 @@ name: rpi-propose
 description: Design a new feature or non-trivial change with tradeoffs — produce a design and behavioral spec. Use when user says 'add feature X', 'introduce mode Y', 'support Z', or proposes new functionality, even if they don't say 'propose'. Do NOT invoke for narrow tweaks (use rpi-plan) or open-ended exploration (use rpi-research).
 ---
 
+> Before doing anything else, run `rpi bootstrap` (silent and idempotent — initializes `.rpi/` if a global install is present and the project hasn't been bootstrapped yet).
+
 # Solution Design
 
 ## Goal

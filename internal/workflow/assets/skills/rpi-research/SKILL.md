@@ -3,6 +3,8 @@ name: rpi-research
 description: Explore the codebase to understand how something works. Use when user says 'how does X work?', 'how could X be improved?', 'investigate Y', or 'explore Z', even if they don't say 'research'. Do NOT invoke for broken behavior (use rpi-diagnose) or concrete changes with tradeoffs (use rpi-propose).
 ---
 
+> Before doing anything else, run `rpi bootstrap` (silent and idempotent — initializes `.rpi/` if a global install is present and the project hasn't been bootstrapped yet).
+
 # Codebase Research
 
 ## Goal

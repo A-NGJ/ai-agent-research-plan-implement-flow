@@ -3,6 +3,8 @@ name: rpi-verify
 description: Verify an implementation against its design and spec across completeness, correctness, and coherence — produce a severity-classified review. Use when user says 'verify the implementation', 'check the implementation matches the design', or 'review what I just shipped'.
 ---
 
+> Before doing anything else, run `rpi bootstrap` (silent and idempotent — initializes `.rpi/` if a global install is present and the project hasn't been bootstrapped yet).
+
 # Verify Implementation
 
 ## Goal

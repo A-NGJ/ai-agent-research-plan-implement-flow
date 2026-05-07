@@ -3,6 +3,8 @@ name: rpi-plan
 description: Plan a concrete, scoped change to existing behavior — produce a phased implementation plan. Use when user says 'remove the X flag', 'update Y to do Z', 'make sure X happens', or 'improve A to do B', even if they don't say 'plan'. Do NOT invoke when the change requires weighing design tradeoffs (use rpi-propose).
 ---
 
+> Before doing anything else, run `rpi bootstrap` (silent and idempotent — initializes `.rpi/` if a global install is present and the project hasn't been bootstrapped yet).
+
 # Implementation Plan
 
 ## Goal

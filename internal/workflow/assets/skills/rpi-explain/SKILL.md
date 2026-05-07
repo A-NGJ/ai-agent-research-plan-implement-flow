@@ -3,6 +3,8 @@ name: rpi-explain
 description: Walk through a recent diff and explain what changed and why, focusing on non-obvious decisions. Use when user says 'explain the changes', 'walk me through the diff', 'what did we just do?', or 'explain how <feature> was implemented'.
 ---
 
+> Before doing anything else, run `rpi bootstrap` (silent and idempotent — initializes `.rpi/` if a global install is present and the project hasn't been bootstrapped yet).
+
 # Explain Implementation
 
 ## Goal

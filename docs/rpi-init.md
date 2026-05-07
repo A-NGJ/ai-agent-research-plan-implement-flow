@@ -99,6 +99,54 @@ to a sibling `.bak` file before the latest embedded version is written.
 No project-level artifacts (`.rpi/`, rules file, `.gitignore`) are
 created or modified.
 
+## Auto-bootstrap on first skill use
+
+Once you've run `rpi init --global`, every `rpi-*` skill auto-initializes
+the project's `.rpi/` tree, rules file, and `.gitignore` policy at the
+git root the first time it's invoked in a fresh repo. No `rpi init`
+needed per project.
+
+Each `rpi-*` SKILL.md prompt opens with a one-line preamble:
+
+> Before doing anything else, run `rpi bootstrap` (silent and idempotent
+> — initializes `.rpi/` if a global install is present and the project
+> hasn't been bootstrapped yet).
+
+The `rpi bootstrap` subcommand has four exit paths:
+
+- **Silent no-op** when the project already has a `.rpi/` (anywhere up
+  the directory tree).
+- **Silent no-op** when no user-level install exists at
+  `~/.claude/skills/rpi-research/` or `~/.config/opencode/skills/rpi-research/`.
+- **Silent no-op** when the cwd is not inside a git repository.
+- **Auto-init** otherwise: creates `.rpi/<subdirs>/`, the rules file
+  (`CLAUDE.md` or `AGENTS.md` per detected target), and the standard
+  `.rpi/*` + `!.rpi/specs/` `.gitignore` entries — all at the git root,
+  regardless of which subdirectory the user is in. Prints exactly one
+  line to stderr:
+  `✓ Auto-initialized .rpi/ in <git-root> — skills inherited from <global-path>`
+
+You can run `rpi bootstrap` directly any time — it's safe and idempotent.
+
+### What auto-bootstrap does NOT do
+
+It deliberately keeps the project's footprint minimal:
+
+- No `./.claude/` or `./.opencode/` directory is created — skills,
+  agents, hooks, and permissions are inherited from the global install.
+- No MCP server registration (already user-scope from `rpi init --global`).
+- No `settings.json` is written.
+
+If you later want a fully project-local install (skills, agents, etc.
+in `./.claude/`), run `rpi init` explicitly.
+
+### OpenCode users
+
+Auto-bootstrap is currently triggered by the same skill preamble used
+for the Claude target — the SKILL.md content is shared across both. If
+you're using OpenCode without a global install, simply run
+`rpi bootstrap` manually in a project to get the same lite-init.
+
 ## Installation
 
 Build and install the `rpi` binary:

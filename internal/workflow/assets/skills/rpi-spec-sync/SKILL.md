@@ -3,6 +3,8 @@ name: rpi-spec-sync
 description: Detect spec drift and sync .rpi/specs/ to the current codebase — rewrite, rename, merge, or archive obsolete specs. Use when user says 'sync the specs', 'the spec is stale', 'specs need updating', or 'clean up old specs'.
 ---
 
+> Before doing anything else, run `rpi bootstrap` (silent and idempotent — initializes `.rpi/` if a global install is present and the project hasn't been bootstrapped yet).
+
 # Spec Sync
 
 ## Goal
