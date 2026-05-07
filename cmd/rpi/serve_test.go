@@ -420,6 +420,7 @@ func TestIntegration_AllToolsRegistered(t *testing.T) {
 		"rpi_archive_check_refs",
 		"rpi_archive_move",
 		"rpi_search",
+		"rpi_split_score",
 	}
 
 	if len(res.Tools) != len(expectedTools) {

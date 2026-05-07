@@ -14,6 +14,7 @@ import (
 	"github.com/A-NGJ/rpi/internal/git"
 	"github.com/A-NGJ/rpi/internal/scanner"
 	"github.com/A-NGJ/rpi/internal/search"
+	"github.com/A-NGJ/rpi/internal/split"
 	tmpl "github.com/A-NGJ/rpi/internal/template"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/spf13/cobra"
@@ -203,6 +204,12 @@ func registerTools(s *mcp.Server) {
 		Name:        "rpi_search",
 		Description: mcpDescription(searchCmd),
 	}, handleSearch)
+
+	// Plan split heuristic
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "rpi_split_score",
+		Description: mcpDescription(splitScoreCmd),
+	}, handleSplitScore)
 }
 
 // --- No-param tool handlers ---
@@ -618,4 +625,28 @@ func handleSearch(ctx context.Context, _ *mcp.CallToolRequest, input searchInput
 		MinScore:       input.MinScore,
 	}, search.QueryOptions{})
 	return jsonResult(resp)
+}
+
+type splitScoreInput struct {
+	Path      string `json:"path" jsonschema:"path to the design file"`
+	Threshold int    `json:"threshold,omitempty" jsonschema:"score threshold; should_split is true when score >= threshold (default 4)"`
+}
+
+func handleSplitScore(_ context.Context, _ *mcp.CallToolRequest, input splitScoreInput) (*mcp.CallToolResult, any, error) {
+	if input.Path == "" {
+		return nil, nil, fmt.Errorf("path is required")
+	}
+	data, err := os.ReadFile(input.Path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("read design: %w", err)
+	}
+	threshold := input.Threshold
+	if threshold == 0 {
+		threshold = split.DefaultThreshold
+	}
+	result, err := split.ComputeBytes(input.Path, data, threshold)
+	if err != nil {
+		return nil, nil, err
+	}
+	return jsonResult(result)
 }
