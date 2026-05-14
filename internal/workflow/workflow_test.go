@@ -12,12 +12,12 @@ import (
 // --- Agent Skills format compliance tests ---
 
 func TestAllSkillsPresent(t *testing.T) {
-	// AS-12: All 11 skills must be present (10 first-party pipeline skills +
+	// AS-12: All 12 skills must be present (11 first-party pipeline skills +
 	// 1 bundled third-party skill: grill-me from mattpocock/skills under MIT).
 	expected := []string{
 		"rpi-research", "rpi-propose", "rpi-plan", "rpi-implement",
 		"rpi-verify", "rpi-diagnose", "rpi-explain", "rpi-commit", "rpi-archive",
-		"rpi-spec-sync",
+		"rpi-spec-sync", "rpi-handoff",
 		"grill-me",
 	}
 
@@ -139,18 +139,18 @@ func TestInstallSkills(t *testing.T) {
 	if err != nil {
 		t.Fatalf("InstallSkills error: %v", err)
 	}
-	// 10 first-party SKILL.md + grill-me's SKILL.md + grill-me's LICENSE = 12.
-	if count != 12 {
-		t.Errorf("expected 12 files installed, got %d", count)
+	// 11 first-party SKILL.md + grill-me's SKILL.md + grill-me's LICENSE = 13.
+	if count != 13 {
+		t.Errorf("expected 13 files installed, got %d", count)
 	}
 
-	// Verify all 11 skill dirs exist (10 first-party + grill-me).
+	// Verify all 12 skill dirs exist (11 first-party + grill-me).
 	entries, err := os.ReadDir(skillsDir)
 	if err != nil {
 		t.Fatalf("read skills dir: %v", err)
 	}
-	if len(entries) != 11 {
-		t.Errorf("expected 11 skill dirs, got %d", len(entries))
+	if len(entries) != 12 {
+		t.Errorf("expected 12 skill dirs, got %d", len(entries))
 	}
 
 	// Verify deployed files have no tool-specific fields.
