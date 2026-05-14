@@ -319,13 +319,22 @@ func TestPromptStructure_LineCount(t *testing.T) {
 }
 
 func TestPromptStructure_NoToolReferences(t *testing.T) {
+	// Skills exempt from the no-tool-references rule. rpi-handoff's design
+	// makes the literal `rpi resume` invocation load-bearing — embedding the
+	// CLI's verbatim output is the contract; abstracting the producer would
+	// weaken it. Add new exemptions sparingly and only with a written
+	// design-level reason.
+	exempt := map[string]bool{
+		"rpi-handoff": true,
+	}
+
 	entries, err := fs.ReadDir(assets, "assets/skills")
 	if err != nil {
 		t.Fatalf("read assets/skills: %v", err)
 	}
 
 	for _, e := range entries {
-		if !e.IsDir() {
+		if !e.IsDir() || exempt[e.Name()] {
 			continue
 		}
 		data, err := assets.ReadFile("assets/skills/" + e.Name() + "/SKILL.md")

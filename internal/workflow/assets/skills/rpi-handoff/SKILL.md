@@ -26,7 +26,7 @@ This skill writes only. The SessionStart hook installed by project setup is what
   Existing handoff at <path> will be overwritten — proceeding
   ```
   The warning is user-visible by design — the user can interrupt before the write.
-- Capture the live RPI session-state snapshot (the same data the SessionStart resume nudge surfaces) and embed it **verbatim** under the `## RPI session state` section of the handoff body. Embedding (not just referencing where to compute it) is required so the next session sees the snapshot the previous session signed off on, even if `.rpi/` artifacts drift between capture and pickup.
+- Run `rpi resume` to capture the current RPI-derived session state, and embed its output **verbatim** under the `## RPI session state` section of the handoff body. Embedding (not just referencing the command) is required so the next session sees the snapshot the previous session signed off on, even if `.rpi/` artifacts drift between capture and pickup.
 - Reference `.rpi/` artifacts (plans, designs, specs, research) by path under `## References` — never duplicate their bodies. The next session reads them itself.
 - On a single-user workstation the sensitive-content risk is the user's responsibility; if the conversation visibly touched secrets, internal URLs, or other sensitive content, call it out before writing (mirrors the commit skill).
 - Write the handoff via the Write tool. After writing, confirm with one line:
@@ -46,7 +46,7 @@ Compose the handoff body in this order. Omit `## Focus for next session` when `$
 5. `## Pending uncommitted work` — only when the working tree is dirty. Flag it and suggest the commit skill for the next session.
 6. `## References` — `.rpi/` artifact paths mentioned in the session, by path only.
 7. `## Suggested skills for next session` — e.g. plan, implement, verify, based on what was in flight.
-8. `## RPI session state` — the embedded snapshot, verbatim.
+8. `## RPI session state` — the embedded `rpi resume` output, verbatim.
 
 ## Pickup
 
