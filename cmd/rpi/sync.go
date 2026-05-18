@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -74,29 +73,29 @@ func liteSyncProject(opts syncOptions) error {
 		logSuccess(opts.w, fmt.Sprintf("Backed up %d modified template files", tplBackups))
 	}
 
-	// Write rules file — always install latest, back up if existing content differs
+	// Rules file: when missing, write the rendered template (which already
+	// contains the spliced contract block). When present, leave user content
+	// outside the contract fences alone — writeContractBlock refreshes the
+	// fenced region in place and preserves everything else byte-for-byte
+	// (see .rpi/specs/rpi-skill-contract.md).
 	if !opts.skipRules && opts.cfg.rulesFile != "" {
 		rulesPath := filepath.Join(opts.targetDir, opts.cfg.rulesFile)
-		content, tplErr := templates.Get(opts.cfg.rulesFile)
-		if tplErr != nil {
-			logWarning(opts.w, fmt.Sprintf("get %s template: %v", opts.cfg.rulesFile, tplErr))
-		} else {
-			newData := []byte(content)
-			existing, readErr := os.ReadFile(rulesPath)
-			if readErr == nil && !bytes.Equal(existing, newData) {
-				if bakErr := os.WriteFile(rulesPath+".bak", existing, 0644); bakErr != nil {
-					logWarning(opts.w, fmt.Sprintf("backup %s: %v", opts.cfg.rulesFile, bakErr))
-				} else {
-					logSuccess(opts.w, fmt.Sprintf("Backed up %s to %s.bak", opts.cfg.rulesFile, opts.cfg.rulesFile))
-				}
+		if _, statErr := os.Stat(rulesPath); os.IsNotExist(statErr) {
+			content, tplErr := templates.Get(opts.cfg.rulesFile)
+			if tplErr != nil {
+				logWarning(opts.w, fmt.Sprintf("get %s template: %v", opts.cfg.rulesFile, tplErr))
+			} else if writeErr := os.WriteFile(rulesPath, []byte(content), 0644); writeErr != nil {
+				logWarning(opts.w, fmt.Sprintf("write %s: %v", opts.cfg.rulesFile, writeErr))
+			} else {
+				logSuccess(opts.w, fmt.Sprintf("Installed %s", opts.cfg.rulesFile))
 			}
-			if readErr != nil || !bytes.Equal(existing, newData) {
-				if writeErr := os.WriteFile(rulesPath, newData, 0644); writeErr != nil {
-					logWarning(opts.w, fmt.Sprintf("write %s: %v", opts.cfg.rulesFile, writeErr))
-				} else {
-					logSuccess(opts.w, fmt.Sprintf("Installed %s", opts.cfg.rulesFile))
-				}
-			}
+		}
+
+		// Refresh the RPI Skill Contract block in place. Idempotent — no
+		// change when the block is current. Skipped for agents-only target
+		// (rulesFile == "") and under --no-claude-md (skipRules).
+		if err := writeContractBlock(opts.w, rulesPath); err != nil {
+			logWarning(opts.w, fmt.Sprintf("refresh contract block in %s: %v", opts.cfg.rulesFile, err))
 		}
 	}
 

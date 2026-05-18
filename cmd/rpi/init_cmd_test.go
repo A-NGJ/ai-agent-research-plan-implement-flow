@@ -445,6 +445,92 @@ func TestInitOpenCode(t *testing.T) {
 	}
 }
 
+func TestInitWritesContractBlock_Claude(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := runInitInDir(t, dir); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(dir, "CLAUDE.md"))
+	if err != nil {
+		t.Fatalf("read CLAUDE.md: %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "<!-- rpi:contract:begin") {
+		t.Error("CLAUDE.md missing contract begin marker")
+	}
+	if !strings.Contains(content, "<!-- rpi:contract:end -->") {
+		t.Error("CLAUDE.md missing contract end marker")
+	}
+	if !strings.Contains(content, "## RPI Skill Contract") {
+		t.Error("CLAUDE.md missing '## RPI Skill Contract' heading")
+	}
+}
+
+func TestInitWritesContractBlock_OpenCode(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := runInitOpenCode(t, dir); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(dir, "AGENTS.md"))
+	if err != nil {
+		t.Fatalf("read AGENTS.md: %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "<!-- rpi:contract:begin") {
+		t.Error("AGENTS.md missing contract begin marker")
+	}
+	if !strings.Contains(content, "<!-- rpi:contract:end -->") {
+		t.Error("AGENTS.md missing contract end marker")
+	}
+	if !strings.Contains(content, "## RPI Skill Contract") {
+		t.Error("AGENTS.md missing '## RPI Skill Contract' heading")
+	}
+}
+
+func TestInitAgentsOnly_NoContractWritten(t *testing.T) {
+	dir := t.TempDir()
+	resetInitFlags()
+	initTarget = "agents-only"
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	if err := cmd.RunE(cmd, []string{dir}); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+
+	for _, name := range []string{"CLAUDE.md", "AGENTS.md"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err == nil {
+			t.Errorf("%s should not exist for agents-only target", name)
+		}
+	}
+
+	// Walk target directory and confirm no file mentions a contract fence.
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if info.IsDir() {
+			return nil
+		}
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return nil
+		}
+		if bytes.Contains(data, []byte("<!-- rpi:contract:begin")) {
+			t.Errorf("agents-only target left a contract begin marker in %s", path)
+		}
+		if bytes.Contains(data, []byte("<!-- rpi:contract:end -->")) {
+			t.Errorf("agents-only target left a contract end marker in %s", path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk: %v", err)
+	}
+}
+
 func TestInitOpenCodeAlreadyExists(t *testing.T) {
 	dir := t.TempDir()
 

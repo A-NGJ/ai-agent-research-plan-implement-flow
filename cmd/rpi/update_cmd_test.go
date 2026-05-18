@@ -257,7 +257,12 @@ func TestUpdateSkipsIdenticalFiles(t *testing.T) {
 	}
 }
 
-func TestUpdateBacksUpModifiedRulesFile(t *testing.T) {
+// TestUpdatePreservesModifiedRulesFile verifies that rpi update no longer
+// overwrites a user-customized CLAUDE.md wholesale. Per the rpi-skill-contract
+// spec, update preserves user content outside the contract fence and only
+// refreshes the fenced block in place. The contract block is appended if
+// absent — but no .bak is created for non-fenced content.
+func TestUpdatePreservesModifiedRulesFile(t *testing.T) {
 	dir := t.TempDir()
 
 	// Init
@@ -269,11 +274,14 @@ func TestUpdateBacksUpModifiedRulesFile(t *testing.T) {
 		t.Fatalf("init failed: %v", err)
 	}
 
-	// Modify CLAUDE.md
+	// Replace CLAUDE.md with hand-rolled content (no contract block).
 	claudeMD := filepath.Join(dir, "CLAUDE.md")
-	os.WriteFile(claudeMD, []byte("custom content"), 0644)
+	custom := "# CLAUDE.md\n\nMy custom overview.\n\n## Custom Section\n\nUser content.\n"
+	if err := os.WriteFile(claudeMD, []byte(custom), 0644); err != nil {
+		t.Fatal(err)
+	}
 
-	// Update — should overwrite and create backup
+	// Update — must preserve the custom content and append the contract block.
 	resetUpdateFlags()
 	buf = new(bytes.Buffer)
 	cmd = updateCmd
@@ -282,22 +290,20 @@ func TestUpdateBacksUpModifiedRulesFile(t *testing.T) {
 		t.Fatalf("update error: %v", err)
 	}
 
-	// CLAUDE.md should be overwritten with template
-	data, _ := os.ReadFile(claudeMD)
-	if string(data) == "custom content" {
-		t.Error("update should overwrite CLAUDE.md with template")
+	data, err := os.ReadFile(claudeMD)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(string(data), "# CLAUDE.md") {
-		t.Error("CLAUDE.md missing template header after update")
+	if !bytes.HasPrefix(data, []byte(custom)) {
+		t.Errorf("update should preserve user content at file start.\nwant prefix: %q\ngot:         %q", custom, data)
+	}
+	if !bytes.Contains(data, []byte("<!-- rpi:contract:begin")) {
+		t.Error("update should append contract block to a customized rules file")
 	}
 
-	// Backup should exist
-	bakData, err := os.ReadFile(claudeMD + ".bak")
-	if err != nil {
-		t.Fatal("CLAUDE.md.bak not created")
-	}
-	if string(bakData) != "custom content" {
-		t.Error("backup should contain original custom content")
+	// No .bak should be created for the rules file under the new behavior.
+	if _, err := os.Stat(claudeMD + ".bak"); err == nil {
+		t.Error("update should not create CLAUDE.md.bak under new fence-preserving behavior")
 	}
 }
 

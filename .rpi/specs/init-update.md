@@ -1,8 +1,8 @@
 ---
 domain: init-update-cleanup
 feature: init-update
-last_updated: 2026-05-04T00:00:00+02:00
-updated_by: .rpi/plans/2026-05-04-rpi-update-applies-gitignore-policy.md
+last_updated: 2026-05-18T00:00:00+02:00
+updated_by: .rpi/plans/2026-05-18-rpi-skill-contract-block-in-rules-file.md
 ---
 
 # Init/Update Cleanup
@@ -19,9 +19,9 @@ When inspecting the init and update command implementations
 Then both call a shared sync function for installing skills, templates, rules file, and settings
 
 ### Update backs up modified files before overwriting
-Given an initialized project with customized skill files or CLAUDE.md
+Given an initialized project with customized skill files
 When `rpi update` runs
-Then modified files are backed up to `.bak` and replaced with the latest embedded versions
+Then modified files are backed up to `.bak` and replaced with the latest embedded versions. The project rules file (CLAUDE.md / AGENTS.md) is the carve-out: its content is preserved in place, and only the fenced RPI Skill Contract block is refreshed (see `.rpi/specs/rpi-skill-contract.md`).
 
 ### Update skips backup when file content is identical
 Given an initialized project with no local modifications to managed files
@@ -61,6 +61,7 @@ Then `.gitignore` is appended with `.rpi/*` and `!.rpi/specs/` (and `.claude/` f
 ## Constraints
 - Init and update remain separate Cobra commands
 - Do not introduce new dependencies or packages
+- Rules-file updates beyond the contract block are governed by `.rpi/specs/rpi-skill-contract.md`; update preserves user content outside the contract fence byte-for-byte.
 
 ## Out of Scope
 - Merging init/update into one command
