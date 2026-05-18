@@ -156,8 +156,11 @@ func TestUpdateReplacesContractBlockContents(t *testing.T) {
 	if !strings.HasPrefix(got, before) {
 		t.Errorf("user content before block was modified.\nwant prefix: %q\ngot:         %q", before, got)
 	}
-	if !strings.HasSuffix(got, after) {
-		t.Errorf("user content after block was modified.\nwant suffix: %q\ngot:         %q", after, got)
+	// User After section must be preserved verbatim somewhere in the file —
+	// it may no longer sit at EOF because section reconciliation appends
+	// missing template sections at the end.
+	if !strings.Contains(got, after) {
+		t.Errorf("user content after block was removed or rewritten.\nwant fragment: %q\ngot:           %q", after, got)
 	}
 }
 

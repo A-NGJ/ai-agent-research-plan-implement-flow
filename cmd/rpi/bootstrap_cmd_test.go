@@ -228,6 +228,47 @@ func TestBootstrapPrefersClaudeOverOpenCode(t *testing.T) {
 	}
 }
 
+func TestBootstrap_AppendsMissingSectionsToExistingRulesFile(t *testing.T) {
+	home := t.TempDir()
+	projectDir := t.TempDir()
+	setupBootstrap(t, bootstrapSetup{
+		home:         home,
+		globalTarget: "claude",
+		projectDir:   projectDir,
+		createGit:    true,
+	})
+
+	// User has a hand-rolled CLAUDE.md before bootstrap runs.
+	claudeMD := filepath.Join(projectDir, "CLAUDE.md")
+	prior := "# CLAUDE.md\n\n## Project Overview\n\nUser-owned overview text.\n"
+	if err := os.WriteFile(claudeMD, []byte(prior), 0644); err != nil {
+		t.Fatalf("seed CLAUDE.md: %v", err)
+	}
+
+	if _, _, err := runBootstrapCmd(t); err != nil {
+		t.Fatalf("bootstrap: %v", err)
+	}
+
+	got, err := os.ReadFile(claudeMD)
+	if err != nil {
+		t.Fatalf("read CLAUDE.md: %v", err)
+	}
+	// User content preserved at the start of the file.
+	if !bytes.HasPrefix(got, []byte(prior)) {
+		t.Errorf("user content not preserved at file start.\nwant prefix: %q\ngot:         %q", prior, got)
+	}
+	// Missing template sections appended.
+	for _, want := range []string{"## Git Workflow", "## RPI Artifacts Directory", "## Codebase Navigation", "## Development Conventions"} {
+		if !bytes.Contains(got, []byte("\n"+want+"\n")) {
+			t.Errorf("missing template section %q not appended by bootstrap.\nfile:\n%s", want, got)
+		}
+	}
+	// Contract block appended too.
+	if !bytes.Contains(got, []byte("<!-- rpi:contract:begin")) {
+		t.Error("bootstrap did not append contract block to existing CLAUDE.md")
+	}
+}
+
 func TestBootstrapDetectsOpenCodeAlone(t *testing.T) {
 	home := t.TempDir()
 	projectDir := t.TempDir()

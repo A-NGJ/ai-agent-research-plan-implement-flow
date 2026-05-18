@@ -75,8 +75,9 @@ func liteSyncProject(opts syncOptions) error {
 
 	// Rules file: when missing, write the rendered template (which already
 	// contains the spliced contract block). When present, leave user content
-	// outside the contract fences alone — writeContractBlock refreshes the
-	// fenced region in place and preserves everything else byte-for-byte
+	// outside the contract fences alone — reconcileRulesFileSections appends
+	// any top-level template sections missing from the existing file, and
+	// writeContractBlock refreshes the fenced region in place
 	// (see .rpi/specs/rpi-skill-contract.md).
 	if !opts.skipRules && opts.cfg.rulesFile != "" {
 		rulesPath := filepath.Join(opts.targetDir, opts.cfg.rulesFile)
@@ -89,6 +90,14 @@ func liteSyncProject(opts syncOptions) error {
 			} else {
 				logSuccess(opts.w, fmt.Sprintf("Installed %s", opts.cfg.rulesFile))
 			}
+		}
+
+		// Append any top-level template sections missing from the existing
+		// rules file. Append-only and idempotent — never edits or replaces
+		// existing content. Runs before writeContractBlock so the contract
+		// block ends up at EOF on a contract-less file.
+		if err := reconcileRulesFileSections(opts.w, rulesPath, opts.cfg.rulesFile); err != nil {
+			logWarning(opts.w, fmt.Sprintf("reconcile sections in %s: %v", opts.cfg.rulesFile, err))
 		}
 
 		// Refresh the RPI Skill Contract block in place. Idempotent — no
