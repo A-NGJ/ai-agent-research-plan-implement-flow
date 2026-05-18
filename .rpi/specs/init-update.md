@@ -1,8 +1,8 @@
 ---
 domain: init-update-cleanup
 feature: init-update
-last_updated: 2026-05-18T00:00:00+02:00
-updated_by: .rpi/plans/2026-05-18-rpi-skill-contract-block-in-rules-file.md
+last_updated: 2026-05-18T12:01:03+02:00
+updated_by: .rpi/plans/2026-05-18-append-missing-rules-file-sections-on-bootstrap-and-update.md
 ---
 
 # Init/Update Cleanup
@@ -21,7 +21,7 @@ Then both call a shared sync function for installing skills, templates, rules fi
 ### Update backs up modified files before overwriting
 Given an initialized project with customized skill files
 When `rpi update` runs
-Then modified files are backed up to `.bak` and replaced with the latest embedded versions. The project rules file (CLAUDE.md / AGENTS.md) is the carve-out: its content is preserved in place, and only the fenced RPI Skill Contract block is refreshed (see `.rpi/specs/rpi-skill-contract.md`).
+Then modified files are backed up to `.bak` and replaced with the latest embedded versions. The project rules file (CLAUDE.md / AGENTS.md) is the carve-out: its content is preserved in place. Only two writer paths may touch it: (a) the fenced RPI Skill Contract block is refreshed (see `.rpi/specs/rpi-skill-contract.md`), and (b) missing top-level `## Heading` sections from the current rendered template are appended at EOF.
 
 ### Update skips backup when file content is identical
 Given an initialized project with no local modifications to managed files

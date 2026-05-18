@@ -1,8 +1,8 @@
 ---
 domain: rpi init / rpi update rules-file management
 feature: rpi-skill-contract
-last_updated: 2026-05-18T10:44:07+02:00
-updated_by: .rpi/designs/2026-05-18-rpi-skill-contract-block-in-rules-file.md
+last_updated: 2026-05-18T12:01:03+02:00
+updated_by: .rpi/plans/2026-05-18-append-missing-rules-file-sections-on-bootstrap-and-update.md
 ---
 
 # rpi-skill-contract
@@ -36,7 +36,22 @@ Then the rules file gains the contract block at its end (or in its conventional 
 ### Update refreshes stale contract content without touching surrounding edits
 Given an initialized project whose rules file contains a contract block with outdated content and additional user-added sections before and after the block
 When the user runs `rpi update`
-Then the contents inside the contract delimiters are replaced with the current version, and every line outside the delimiters is preserved byte-for-byte
+Then the contents inside the contract delimiters are replaced with the current version, and every line outside the delimiters is preserved — with the sole exception that missing top-level template sections may be appended at EOF (see "Update appends missing template sections at EOF")
+
+### Update appends missing template sections at EOF
+Given an initialized project whose rules file is missing one or more `## Heading` sections present in the current rendered template
+When the user runs `rpi update`
+Then each missing section is appended to the end of the rules file in template order, separated by blank lines, and every existing line (including the contract block and user-added sections) is preserved
+
+### Section reconciliation is idempotent
+Given an initialized project whose rules file already contains every `## Heading` from the current rendered template
+When the user runs `rpi update` a second time
+Then no section is appended, the rules file mtime is unchanged, and the file is not rewritten
+
+### Drifted section bodies are left alone
+Given an initialized project whose rules file contains all template `## Heading`s but the body of one section has been edited by the user
+When the user runs `rpi update`
+Then the edited body is preserved byte-for-byte and no template body overrides the user edit
 
 ### Re-running update is idempotent
 Given an initialized project whose rules file already contains the current contract block
@@ -61,7 +76,7 @@ Then the skill still triggers on its description, runs its skill-specific invari
 ## Constraints
 
 - Skill bodies remain the source of truth for skill-specific behavior. Only invariants that apply across two or more rpi-* skills migrate into the contract block.
-- The contract block is delimited so that idempotent in-place rewrites are possible across `rpi update` runs; user content outside the delimiters is never modified by the writer.
+- The contract block is delimited so that idempotent in-place rewrites are possible across `rpi update` runs; user content outside the delimiters is never modified or reordered. The writer may only *append* missing top-level template sections at EOF — it never edits or replaces user content elsewhere in the file.
 - The contract block carries a visible version marker inside its opening delimiter so future writers can detect and migrate older formats.
 - The bootstrap preamble at the top of every rpi-* skill body is retained — the contract block cannot solve the cold-start case where the rules file does not yet exist.
 - The contract block is written only when the target writes a rules file. Targets that do not produce a rules file (today: `agents-only`) receive no contract block, and rpi-* skills must still function in that environment.
