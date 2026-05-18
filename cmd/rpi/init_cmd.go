@@ -306,7 +306,6 @@ var safeBashPatterns = []string{
 	"Bash(rpi frontmatter:*)",
 	"Bash(rpi scaffold:*)",
 	"Bash(rpi archive:*)",
-	"Bash(rpi bootstrap:*)",
 	"Bash(rm /tmp/claude-handoff-*.md)",
 }
 

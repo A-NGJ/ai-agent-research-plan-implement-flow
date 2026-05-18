@@ -1,8 +1,8 @@
 ---
 domain: rpi init / rpi update settings configuration for Claude target
 feature: rpi-bash-auto-accept
-last_updated: 2026-05-17T23:51:06+02:00
-updated_by: .rpi/designs/2026-05-17-silent-rpi-bootstrap-via-safe-bash-allowlist.md
+last_updated: 2026-05-18T12:00:00+02:00
+updated_by: .rpi/plans/2026-05-18-remove-rpi-bootstrap-preamble-from-skills.md
 ---
 
 # rpi-bash-auto-accept
@@ -47,11 +47,6 @@ Then no Claude permissions file is created or modified by this feature
 Given a project whose permissions file already contains user-managed allow entries unrelated to rpi
 When `rpi init` or `rpi update` runs for the Claude target
 Then those user entries remain intact, and the safe Bash allowlist entries are appended without removing, reordering, or rewriting them
-
-### Skill-invoked bootstrap is auto-accepted in initialized projects
-Given a project where `rpi init` or `rpi update` has run for the Claude target
-When an `rpi-*` skill's preamble invokes `rpi bootstrap` during a session
-Then Claude Code runs it without prompting the user, because `Bash(rpi bootstrap:*)` is part of the seeded allowlist
 
 ## Constraints
 
