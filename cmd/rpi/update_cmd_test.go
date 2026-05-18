@@ -259,9 +259,10 @@ func TestUpdateSkipsIdenticalFiles(t *testing.T) {
 
 // TestUpdatePreservesModifiedRulesFile verifies that rpi update no longer
 // overwrites a user-customized CLAUDE.md wholesale. Per the rpi-skill-contract
-// spec, update preserves user content outside the contract fence and only
-// refreshes the fenced block in place. The contract block is appended if
-// absent — but no .bak is created for non-fenced content.
+// spec, update preserves user content outside the contract fence; two writer
+// paths may touch the file in place: (a) the contract block is refreshed (or
+// appended at EOF if absent), and (b) missing top-level template sections are
+// appended at EOF. No .bak is created for the rules file under either path.
 func TestUpdatePreservesModifiedRulesFile(t *testing.T) {
 	dir := t.TempDir()
 
