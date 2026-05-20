@@ -20,7 +20,7 @@ In Claude Code:
 /rpi:rpi-setup
 ```
 
-That's it. The first command adds this repo as a plugin marketplace; the second installs the `rpi` plugin from it (skills, hooks, MCP server); `/rpi:rpi-setup` fetches the matching `rpi` binary from GitHub Releases into `~/.rpi/bin/rpi`. Re-running `/rpi:rpi-setup` upgrades the binary. See the [full Installation section](#installation) for OpenCode, standalone CLI, and from-source paths.
+That's it. The first command adds this repo as a plugin marketplace; the second installs the `rpi` plugin from it (skills, hooks, MCP server); `/rpi:rpi-setup` fetches the matching `rpi` binary from GitHub Releases into `~/.rpi/bin/rpi`. Re-running `/rpi:rpi-setup` upgrades the binary. **First-time only: restart Claude Code after `/rpi:rpi-setup`** so the `rpi` MCP server can launch — it tried to start at session-open but the binary wasn't there yet. See the [full Installation section](#installation) for OpenCode, standalone CLI, and from-source paths.
 
 ## See It in Action
 

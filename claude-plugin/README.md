@@ -17,6 +17,8 @@ The first command registers this repo as a plugin marketplace (Claude Code reads
 /rpi:rpi-setup
 ```
 
+After setup completes, **restart Claude Code** so the rpi MCP server can launch — the server tried to start at the previous session start but the binary wasn't installed yet, and Claude Code has no live MCP reload. After restart, RPI tools are live.
+
 `/rpi:rpi-setup` downloads the release archive from `A-NGJ/rpi`, verifies it against the release's `checksums.txt`, and installs the binary to `~/.rpi/bin/rpi`. It writes nothing outside that directory. Re-running `/rpi:rpi-setup` upgrades the binary; no other state is modified.
 
 ## Conflict with a prior standalone install

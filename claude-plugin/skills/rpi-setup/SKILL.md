@@ -160,7 +160,15 @@ echo "  export PATH=\"\$HOME/.rpi/bin:\$PATH\""
 # 9. Confirm.
 "$HOME/.rpi/bin/rpi" version || { echo "Installed binary did not run."; exit 1; }
 echo "Setup complete."
+echo
+echo "IMPORTANT: Restart Claude Code (close and reopen this session) so the rpi"
+echo "MCP server can launch. The MCP server tried to start at session start, but"
+echo "the binary wasn't installed yet — it has to be re-launched, and Claude Code"
+echo "has no live MCP reload, so a session restart is required."
+echo "After restart, the RPI tools will be available."
 ```
+
+After step 9 prints "Setup complete." plus the restart instruction, surface the restart message to the user explicitly in your reply — RPI tool calls will fail until the session is restarted, so the user needs to act on it before continuing with any RPI workflow.
 
 ## Behavioral guarantees
 
