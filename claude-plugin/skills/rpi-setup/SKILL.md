@@ -30,17 +30,24 @@ Steps 3 through 9 must run **inside a single Bash invocation**: they share `$tmp
 
 A standalone install — created by `rpi init --global` — leaves skills under `~/.claude/skills/rpi-*` and registers an `rpi` MCP server in `~/.claude/settings.json` outside the plugin. If detected, refuse and instruct the user to clean up first.
 
+This step requires `jq` so the MCP-server check looks at `.mcpServers.rpi` specifically rather than grepping for the bare string `"rpi"` (which false-positives on `extraKnownMarketplaces.rpi` whenever the user has run `/plugin marketplace add A-NGJ/rpi`).
+
 ```sh
+if ! command -v jq >/dev/null 2>&1; then
+  echo "jq is required for /rpi:rpi-setup. Install via your package manager (Homebrew: 'brew install jq'; Debian/Ubuntu: 'apt install jq'), then re-run /rpi:rpi-setup."
+  exit 1
+fi
+
 conflict=0
 if ls -d "$HOME/.claude/skills/rpi-"* >/dev/null 2>&1; then conflict=1; fi
-if [ -f "$HOME/.claude/settings.json" ] && grep -q '"rpi"' "$HOME/.claude/settings.json" 2>/dev/null; then
-  # The plugin's MCP entry lives inside the plugin manifest, not here. Any
-  # "rpi" reference at the user-level settings.json indicates a standalone
-  # install (or a manually added server).
+if [ -f "$HOME/.claude/settings.json" ] && jq -e '.mcpServers.rpi // empty' "$HOME/.claude/settings.json" >/dev/null 2>&1; then
+  # Look at the mcpServers.rpi key specifically — a plain grep for "rpi"
+  # would also match marketplace entries (extraKnownMarketplaces.rpi) and
+  # any other place the string happens to appear.
   conflict=1
 fi
 if [ "$conflict" = 1 ]; then
-  echo "Standalone rpi install detected (skills under ~/.claude/skills/rpi-* or MCP entry in ~/.claude/settings.json)."
+  echo "Standalone rpi install detected (skills under ~/.claude/skills/rpi-* or mcpServers.rpi entry in ~/.claude/settings.json)."
   echo "Run 'rpi uninstall --global' to remove the standalone install, then re-run /rpi:rpi-setup."
   exit 1
 fi
