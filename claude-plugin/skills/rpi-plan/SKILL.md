@@ -1,5 +1,5 @@
 ---
-name: plan
+name: rpi-plan
 description: Plan a concrete, scoped change to existing behavior — produce a phased implementation plan. Use when user says 'remove the X flag', 'update Y to do Z', 'make sure X happens', or 'improve A to do B', even if they don't say 'plan'. Do NOT invoke when the change requires weighing design tradeoffs (use rpi-propose).
 ---
 
@@ -14,7 +14,7 @@ Auto-detect the mode from input:
 - **Pipeline** (path to a design document) → plan built from prior pipeline work
 - **Nothing provided** → ask for input with brief examples of each mode
 
-When the user confirms the plan, suggest → `/rpi:implement <plan-path>` (or the first sibling plan with no dependencies, if the design was split).
+When the user confirms the plan, suggest → `/rpi:rpi-implement <plan-path>` (or the first sibling plan with no dependencies, if the design was split).
 
 ## Invariants
 
@@ -33,7 +33,7 @@ When the user confirms the plan, suggest → `/rpi:implement <plan-path>` (or th
 - Map phases to spec scenarios where applicable
 - Get buy-in on proposed phases before writing the full plan
 - **Per sibling plan in a split**: scaffold each plan with its `depends_on:` list and `Sibling plans` body block, write them in topological order, run the per-plan approval gate (or skip under `--ff`), and update the resume marker on the design until the last sibling is written
-- Under `--ff`, skip approval gates — write the full plan(s) immediately, run the existing automated coverage check, transition the design to complete only after every proposed sibling exists on disk, then invoke `/rpi:implement --ff <plan-path>` via the Skill tool for each plan in topological order (waiting for each to finish before starting the next), then `/rpi:verify <last-plan-path>` once at the end
+- Under `--ff`, skip approval gates — write the full plan(s) immediately, run the existing automated coverage check, transition the design to complete only after every proposed sibling exists on disk, then invoke `/rpi:rpi-implement --ff <plan-path>` via the Skill tool for each plan in topological order (waiting for each to finish before starting the next), then `/rpi:rpi-verify <last-plan-path>` once at the end
 - Under `--grill` (or matching natural-language phrasing) and when `grill-me` is available, invoke `grill-me` on the split proposal (when offered) or on the phase outline (single-plan case) before writing the full plan; apply revisions inline. If `grill-me` is unavailable, tell the user and ask whether to proceed with the standard approval gate.
 - **Pipeline mode**: after writing, verify the plan(s) cover all design decisions — nothing silently dropped. Transition design → complete only when every proposed sibling plan has been written; otherwise leave it active and record remaining plans in the resume marker.
 - Scaffold and save the plan artifact, linking to upstream design and spec

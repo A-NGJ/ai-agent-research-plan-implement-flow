@@ -1,6 +1,6 @@
 ---
-name: setup
-description: Install or upgrade the rpi binary into ~/.rpi/bin/rpi for the Claude Code plugin. Use when user says '/rpi:setup', 'install rpi', 'set up the rpi plugin binary', or after first installing the rpi plugin.
+name: rpi-setup
+description: Install or upgrade the rpi binary into ~/.rpi/bin/rpi for the Claude Code plugin. Use when user says '/rpi:rpi-setup', 'install rpi', 'set up the rpi plugin binary', or after first installing the rpi plugin.
 ---
 
 # RPI Setup
@@ -41,7 +41,7 @@ if [ -f "$HOME/.claude/settings.json" ] && grep -q '"rpi"' "$HOME/.claude/settin
 fi
 if [ "$conflict" = 1 ]; then
   echo "Standalone rpi install detected (skills under ~/.claude/skills/rpi-* or MCP entry in ~/.claude/settings.json)."
-  echo "Run 'rpi uninstall --global' to remove the standalone install, then re-run /rpi:setup."
+  echo "Run 'rpi uninstall --global' to remove the standalone install, then re-run /rpi:rpi-setup."
   exit 1
 fi
 ```
@@ -73,7 +73,7 @@ if ! command -v shasum >/dev/null 2>&1 && ! command -v sha256sum >/dev/null 2>&1
 fi
 if [ -n "$missing" ]; then
   echo "Missing required commands:$missing"
-  echo "Install them via your package manager (Homebrew: 'brew install jq curl'; Debian/Ubuntu: 'apt install jq curl coreutils'), then re-run /rpi:setup."
+  echo "Install them via your package manager (Homebrew: 'brew install jq curl'; Debian/Ubuntu: 'apt install jq curl coreutils'), then re-run /rpi:rpi-setup."
   exit 1
 fi
 

@@ -1,5 +1,5 @@
 ---
-name: verify
+name: rpi-verify
 description: Verify an implementation against its design and spec across completeness, correctness, and coherence — produce a severity-classified review. Use when user says 'verify the implementation', 'check the implementation matches the design', or 'review what I just shipped'.
 ---
 

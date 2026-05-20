@@ -1,5 +1,5 @@
 ---
-name: implement
+name: rpi-implement
 description: Execute an approved plan from .rpi/plans phase by phase with TDD and per-phase verification. Use when user says 'implement the plan', 'start implementing', 'run the next phase', or just approved a plan.
 ---
 
@@ -9,7 +9,7 @@ description: Execute an approved plan from .rpi/plans phase by phase with TDD an
 
 Execute an active plan from `.rpi/plans/` phase by phase. Plans come in two forms: pipeline plans (reference designs and research) or standalone plans (self-contained).
 
-After all phases are complete and verified, announce completion and update the plan status. Then suggest → `/rpi:verify <plan-path>` for an independent verification report.
+After all phases are complete and verified, announce completion and update the plan status. Then suggest → `/rpi:rpi-verify <plan-path>` for an independent verification report.
 
 ## Invariants
 
@@ -31,7 +31,7 @@ After all phases are complete and verified, announce completion and update the p
 - **On mismatch**: stop, present what the plan says vs what you found, ask how to proceed
 - **Context recovery**: if context seems lost or you're unsure which phase you're on, call the context essentials tool to restore your implementation context
 - **On completion**: verify spec conformance for all linked specs — extract scenarios using the verify spec tool, then check each scenario against actual code and tests; plan → complete
-- Under `--ff`, after the plan transitions to complete, invoke `/rpi:verify <plan-path>` via the Skill tool as the chain's terminal step.
+- Under `--ff`, after the plan transitions to complete, invoke `/rpi:rpi-verify <plan-path>` via the Skill tool as the chain's terminal step.
 
 ## Principles
 

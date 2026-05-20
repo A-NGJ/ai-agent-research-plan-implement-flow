@@ -40,14 +40,14 @@ Install the plugin from the Claude Code marketplace, then run the one-step setup
 
 ```
 /plugin install rpi
-/rpi:setup
+/rpi:rpi-setup
 ```
 
-`/rpi:setup` downloads the binary from GitHub Releases, verifies its SHA256 against `checksums.txt`, and installs it to `~/.rpi/bin/rpi`. It writes nothing outside that directory. Re-running `/rpi:setup` upgrades the binary in place; no other state is touched. See the [plugin README](claude-plugin/README.md) for the marketplace listing.
+`/rpi:rpi-setup` downloads the binary from GitHub Releases, verifies its SHA256 against `checksums.txt`, and installs it to `~/.rpi/bin/rpi`. It writes nothing outside that directory. Re-running `/rpi:rpi-setup` upgrades the binary in place; no other state is touched. See the [plugin README](claude-plugin/README.md) for the marketplace listing.
 
-**Command rename for plugin users.** Skill names are namespaced under `rpi:`, so commands surface as `/rpi:plan`, `/rpi:implement`, `/rpi:verify`, etc. (instead of the standalone `/rpi-plan`, `/rpi-implement`, …). The MCP server name (`rpi`) and tool prefix (`mcp__rpi__*`) are unchanged.
+**Command names for plugin users.** Skill folders carry the `rpi-` prefix so the trigger surface stays unambiguous even when Claude Code's slash-command picker strips the plugin namespace. Triggers are `/rpi:rpi-plan`, `/rpi:rpi-implement`, `/rpi:rpi-verify`, etc. (paralleling the standalone `/rpi-plan`, `/rpi-implement`, …). The MCP server name (`rpi`) and tool prefix (`mcp__rpi__*`) are unchanged.
 
-If you previously installed RPI via `rpi init --global`, run `rpi uninstall --global` before `/rpi:setup` — the plugin refuses to overwrite a standalone install.
+If you previously installed RPI via `rpi init --global`, run `rpi uninstall --global` before `/rpi:rpi-setup` — the plugin refuses to overwrite a standalone install.
 
 ### Alternative install (opencode / manual / non-Claude-Code)
 

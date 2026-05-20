@@ -1,5 +1,5 @@
 ---
-name: handoff
+name: rpi-handoff
 description: Capture in-flight conversation context to a deterministic per-project temp file at the end of a session, so the next session in the same project can be told to read and consume it. Use when user says 'handoff', 'end of session', 'save session context for next time', 'wrap this up for the next session', or 'hand off to the next session'.
 argument-hint: "[focus for next session]"
 ---

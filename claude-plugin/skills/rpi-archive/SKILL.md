@@ -1,5 +1,5 @@
 ---
-name: archive
+name: rpi-archive
 description: Move completed or superseded .rpi/ artifacts to .rpi/archive/ with reference checks and frontmatter updates. Use when user says 'archive these artifacts', 'clean up .rpi/', or 'archive completed work'.
 ---
 

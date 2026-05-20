@@ -1,5 +1,5 @@
 ---
-name: research
+name: rpi-research
 description: Explore the codebase to understand how something works. Use when user says 'how does X work?', 'how could X be improved?', 'investigate Y', or 'explore Z', even if they don't say 'research'. Do NOT invoke for broken behavior (use rpi-diagnose) or concrete changes with tradeoffs (use rpi-propose).
 ---
 
@@ -9,7 +9,7 @@ description: Explore the codebase to understand how something works. Use when us
 
 Investigate the codebase conversationally to understand how things work, find patterns, and surface insights.
 
-When insights crystallize into something actionable, suggest → `/rpi:propose` (with the research artifact path if one was saved).
+When insights crystallize into something actionable, suggest → `/rpi:rpi-propose` (with the research artifact path if one was saved).
 
 ## Invariants
 

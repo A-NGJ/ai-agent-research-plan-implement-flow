@@ -1,5 +1,5 @@
 ---
-name: propose
+name: rpi-propose
 description: Design a new feature or non-trivial change with tradeoffs — produce a design and behavioral spec. Use when user says 'add feature X', 'introduce mode Y', 'support Z', or proposes new functionality, even if they don't say 'propose'. Do NOT invoke for narrow tweaks (use rpi-plan) or open-ended exploration (use rpi-research).
 ---
 
@@ -15,7 +15,7 @@ Auto-detect the mode from input:
 - **Updating existing design** (path to existing design) → read it, understand what changed, propose updates in place
 - **Nothing provided** → ask for input with brief examples of each mode
 
-When the user approves the spec, suggest → `/rpi:plan <design-path>`.
+When the user approves the spec, suggest → `/rpi:rpi-plan <design-path>`.
 
 ## Invariants
 
@@ -27,7 +27,7 @@ When the user approves the spec, suggest → `/rpi:plan <design-path>`.
 - Link the design to upstream research via frontmatter
 - Create a behavioral spec with 5-8 Given/When/Then scenarios describing user-observable behavior — scenarios must not reference internal structure (structs, file paths, function names); include a Constraints section for boundaries and an Out of Scope section. Name the spec file after its `feature` field (e.g., `feature: rpi-status` → `rpi-status.md`)
 - Present the spec for approval — iterate until accepted
-- Under `--ff`, skip the trade-off buy-in, the mid-flight decision checkpoints, and the spec approval gate — auto-accept the drafted design and spec and immediately invoke `/rpi:plan --ff <design-path>` via the Skill tool
+- Under `--ff`, skip the trade-off buy-in, the mid-flight decision checkpoints, and the spec approval gate — auto-accept the drafted design and spec and immediately invoke `/rpi:rpi-plan --ff <design-path>` via the Skill tool
 - Under `--grill` (or matching natural-language phrasing) and when `grill-me` is available, invoke `grill-me` on the drafted design+spec before the approval gate; apply revisions inline. If `grill-me` is unavailable, tell the user and ask whether to proceed with the standard approval gate.
 - Transition artifacts: design → active, research → complete (if fully addressed)
 - For incremental mode: update in place, add an Update Log entry, update affected specs

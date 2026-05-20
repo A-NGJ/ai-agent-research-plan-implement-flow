@@ -1,5 +1,5 @@
 ---
-name: explain
+name: rpi-explain
 description: Walk through a recent diff and explain what changed and why, focusing on non-obvious decisions. Use when user says 'explain the changes', 'walk me through the diff', 'what did we just do?', or 'explain how <feature> was implemented'.
 ---
 
@@ -33,7 +33,7 @@ After the initial walkthrough, enter conversation mode — the user can ask foll
 
 ## Principles
 
-- Explain, don't judge — no pass/fail ratings or severity classifications (that's `/rpi:verify`)
+- Explain, don't judge — no pass/fail ratings or severity classifications (that's `/rpi:rpi-verify`)
 - Be interactive — the initial walkthrough is a starting point, not the final word; follow-up questions are expected
 - Attribute your sources — when rationale comes from an artifact, cite it; when inferred, say so; when uncertain, flag it
 - Scale to the diff — large diffs get grouped by theme; small diffs get file-by-file detail
