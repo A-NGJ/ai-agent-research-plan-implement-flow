@@ -1,0 +1,70 @@
+{
+  "name": "rpi",
+  "version": "0.1.0",
+  "description": "Research → Propose → Plan → Implement → Verify workflow for Claude Code. Spec-driven development with persistent artifacts under .rpi/.",
+  "author": {
+    "name": "A-NGJ"
+  },
+  "homepage": "https://github.com/A-NGJ/rpi",
+  "repository": "https://github.com/A-NGJ/rpi",
+  "license": "MIT",
+  "mcpServers": {
+    "rpi": {
+      "command": "~/.rpi/bin/rpi",
+      "args": ["serve"]
+    }
+  },
+  "skills": "./skills/",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-compact.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "mcp__rpi__*",
+      "Bash(rpi scan:*)",
+      "Bash(rpi search:*)",
+      "Bash(rpi status:*)",
+      "Bash(rpi version:*)",
+      "Bash(rpi context:*)",
+      "Bash(rpi resume:*)",
+      "Bash(rpi suggest:*)",
+      "Bash(rpi chain:*)",
+      "Bash(rpi extract:*)",
+      "Bash(rpi git-context:*)",
+      "Bash(rpi verify:*)",
+      "Bash(rpi frontmatter:*)",
+      "Bash(rpi scaffold:*)",
+      "Bash(rpi archive:*)",
+      "Bash(rm /tmp/claude-handoff-*.md)"
+    ]
+  }
+}
