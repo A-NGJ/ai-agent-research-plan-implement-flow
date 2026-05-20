@@ -1,6 +1,6 @@
 {
   "name": "rpi",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Research → Propose → Plan → Implement → Verify workflow for Claude Code. Spec-driven development with persistent artifacts under .rpi/.",
   "author": {
     "name": "A-NGJ"
