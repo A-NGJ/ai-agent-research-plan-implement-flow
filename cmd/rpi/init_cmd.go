@@ -203,14 +203,30 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	// Sync shared project structure (dirs, skills, templates, rules, settings,
 	// .gitignore entries).
-	return syncProject(syncOptions{
+	if err := syncProject(syncOptions{
 		targetDir: targetDir,
 		cfg:       cfg,
 		skipRules: initNoClaudeMD,
 		noTrack:   initNoTrack,
 		global:    initGlobal,
 		w:         w,
-	})
+	}); err != nil {
+		return err
+	}
+
+	// Point Claude Code users at the plugin install — opencode and
+	// agents-only have no plugin alternative, so the hint stays
+	// claude-target-only.
+	if cfg.target == workflow.TargetClaude {
+		printPluginHint(w)
+	}
+	return nil
+}
+
+func printPluginHint(w io.Writer) {
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Tip: Claude Code users can also install RPI as a plugin (one-click, no go install required).")
+	fmt.Fprintln(w, "See: https://github.com/A-NGJ/rpi#install-as-a-claude-code-plugin")
 }
 
 func ensureGitignoreEntries(w io.Writer, targetDir string, entries ...string) error {

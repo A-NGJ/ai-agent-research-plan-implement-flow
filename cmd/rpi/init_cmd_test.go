@@ -1340,6 +1340,62 @@ func TestConfigureHooksReplacesOldFormat(t *testing.T) {
 	}
 }
 
+// TestInitClaudePluginHint verifies the post-install hint pointing at
+// the Claude Code plugin alternative is appended when initializing a
+// claude-target project.
+func TestInitClaudePluginHint(t *testing.T) {
+	dir := t.TempDir()
+	buf, err := runInitInDir(t, dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	output := buf.String()
+	for _, fragment := range []string{
+		"install RPI as a plugin",
+		"install-as-a-claude-code-plugin",
+	} {
+		if !strings.Contains(output, fragment) {
+			t.Errorf("expected plugin hint to contain %q; got: %s", fragment, output)
+		}
+	}
+}
+
+// TestInitOpenCodeNoPluginHint asserts the plugin hint is *not* emitted
+// for opencode targets — the plugin exists for Claude Code only.
+func TestInitOpenCodeNoPluginHint(t *testing.T) {
+	dir := t.TempDir()
+	buf, err := runInitOpenCode(t, dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	output := buf.String()
+	for _, fragment := range []string{
+		"install RPI as a plugin",
+		"install-as-a-claude-code-plugin",
+	} {
+		if strings.Contains(output, fragment) {
+			t.Errorf("opencode init must not print plugin hint %q; got: %s", fragment, output)
+		}
+	}
+}
+
+// TestInitAgentsOnlyNoPluginHint covers the agents-only target, which
+// also has no plugin alternative.
+func TestInitAgentsOnlyNoPluginHint(t *testing.T) {
+	dir := t.TempDir()
+	resetInitFlags()
+	initTarget = "agents-only"
+	buf := new(bytes.Buffer)
+	cmd := initCmd
+	cmd.SetOut(buf)
+	if err := cmd.RunE(cmd, []string{dir}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if strings.Contains(buf.String(), "install-as-a-claude-code-plugin") {
+		t.Errorf("agents-only init must not print plugin hint; got: %s", buf.String())
+	}
+}
+
 // TestSessionHandoffHookRecipePinned locks the load-bearing parts of the
 // claude-handoff hook command so it can't silently drift from the path
 // recipe in internal/workflow/assets/skills/rpi-handoff/SKILL.md. If this
