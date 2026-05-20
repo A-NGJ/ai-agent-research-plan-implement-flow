@@ -69,11 +69,21 @@ fi
 # Extract binary
 tar -xzf "${TMPDIR}/${ARCHIVE}" -C "${TMPDIR}" "${BINARY}"
 
-# Install binary
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
-if [ ! -w "$INSTALL_DIR" ]; then
-  INSTALL_DIR="${HOME}/.local/bin"
-  mkdir -p "$INSTALL_DIR"
+# Install binary. If the user explicitly set INSTALL_DIR, honour it (create if
+# needed; fail loudly if we can't write). Otherwise default to /usr/local/bin
+# with a fallback to ~/.local/bin only when the default isn't writable.
+if [ -n "${INSTALL_DIR:-}" ]; then
+  mkdir -p "$INSTALL_DIR" || { echo "Failed to create INSTALL_DIR=$INSTALL_DIR" >&2; exit 1; }
+  if [ ! -w "$INSTALL_DIR" ]; then
+    echo "INSTALL_DIR=$INSTALL_DIR is not writable" >&2
+    exit 1
+  fi
+else
+  INSTALL_DIR="/usr/local/bin"
+  if [ ! -w "$INSTALL_DIR" ]; then
+    INSTALL_DIR="${HOME}/.local/bin"
+    mkdir -p "$INSTALL_DIR"
+  fi
 fi
 
 cp "${TMPDIR}/${BINARY}" "${INSTALL_DIR}/${BINARY}"
