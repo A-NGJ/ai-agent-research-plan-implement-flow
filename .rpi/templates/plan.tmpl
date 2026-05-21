@@ -12,6 +12,12 @@ design: "{{.Design}}"
 {{- if .Spec}}
 spec: "{{.Spec}}"
 {{- end}}
+{{- if .DependsOn}}
+depends_on:
+{{- range .DependsOn}}
+  - {{.}}
+{{- end}}
+{{- end}}
 ---
 
 # {{if .Ticket}}{{.Ticket}}: {{end}}{{.Topic}} — Implementation Plan
@@ -33,6 +39,14 @@ spec: "{{.Spec}}"
 {{- end}}
 {{- if .Research}}
 - **Research**: {{.Research}}
+{{- end}}
+{{- if .Siblings}}
+
+## Sibling plans
+Split from {{if .Design}}{{.Design}}{{else}}<!-- design -->{{end}}:
+{{- range .Siblings}}
+- {{.}}
+{{- end}}
 {{- end}}
 
 ## Phase 1: <!-- TODO: Descriptive Name -->

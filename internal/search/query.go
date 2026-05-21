@@ -54,11 +54,11 @@ func Query(ctx context.Context, rpiDir string, params SearchParams, opts QueryOp
 	}
 	if !state.DaemonRunning {
 		return backendError(StageDaemonNotRunning, "qmd MCP daemon is not running",
-			"Run 'rpi search --warmup' to start the qmd daemon")
+			"Run 'rpi search --warmup' and retry the query before falling back — the daemon is down but recoverable.")
 	}
 	if !state.ModelsReady {
 		return backendError(StageModelsNotReady, "qmd models are not yet downloaded",
-			"Run 'rpi search --warmup' to download qmd models (one-time, ~2 GB)")
+			"Run 'rpi search --warmup' to download qmd models (one-time, ~2 GB), then retry the query before falling back.")
 	}
 
 	collectionName, err := pipeline.EnsureCollection(ctx, rpiDir)
@@ -106,10 +106,10 @@ func Query(ctx context.Context, rpiDir string, params SearchParams, opts QueryOp
 	raw, err := daemon.Call(ctx, "query", args)
 	if err != nil {
 		stage := StageQuery
-		hint := "Check 'qmd status' and try 'rpi search --warmup' to restart the daemon"
+		hint := "Run 'rpi search --warmup' to restart the qmd daemon and retry the query before falling back."
 		if errors.Is(err, errDaemonNotRunning) {
 			stage = StageDaemonNotRunning
-			hint = "Run 'rpi search --warmup' to start the qmd daemon"
+			hint = "Run 'rpi search --warmup' and retry the query before falling back."
 		} else if errors.Is(err, errParse) {
 			stage = StageParse
 			hint = "qmd returned an unexpected response — file an issue if this persists"

@@ -1,6 +1,6 @@
 {
   "name": "rpi",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Research → Propose → Plan → Implement → Verify workflow for Claude Code. Spec-driven development with persistent artifacts under .rpi/.",
   "author": {
     "name": "A-NGJ"
@@ -49,7 +49,7 @@
   },
   "permissions": {
     "allow": [
-      "mcp__rpi__*",
+      "mcp__plugin_rpi_rpi__*",
       "Bash(rpi scan:*)",
       "Bash(rpi search:*)",
       "Bash(rpi status:*)",

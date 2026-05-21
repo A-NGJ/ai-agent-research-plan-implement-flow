@@ -81,7 +81,7 @@ const (
 )
 
 // fallbackHint is the standard fallback message embedded in non-ok responses.
-const fallbackHint = "Use rpi_scan with type filter + keyword terms from the query"
+const fallbackHint = "Only after 'rpi search --warmup' has been attempted (or qmd install is refused): use rpi_scan with type filter + keyword terms from the query."
 
 // installHint is the standard install instruction shown when qmd isn't on PATH.
-const installHint = "npm install -g @tobilu/qmd, then run rpi search --warmup"
+const installHint = "Install qmd (npm install -g @tobilu/qmd) and run 'rpi search --warmup' before falling back to keyword search — semantic search yields substantially better recall on .rpi/ artifacts."

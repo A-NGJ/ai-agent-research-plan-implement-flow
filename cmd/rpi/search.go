@@ -28,9 +28,12 @@ natural-language query. Returns a four-state status (ok / empty /
 backend_error / backend_unavailable) with ranked hits or an actionable
 hint.
 
-Requires qmd to be installed and warmed up. When qmd is absent or its
-models are not yet downloaded, the response carries a hint so callers
-can either install qmd or run --warmup before retrying.
+Callers SHOULD run 'rpi search --warmup' before treating qmd as
+unavailable. When the response is 'backend_error' with a first-run
+stage ('daemon_not_running' or 'models_not_ready'), the recommended
+caller behavior is: invoke 'rpi search --warmup' once, then retry the
+original query. Only fall back to keyword scan after warmup has been
+attempted and failed, or qmd is genuinely not installed.
 
 Run 'rpi search --warmup' once after installing qmd to spawn the qmd
 HTTP MCP daemon and trigger the one-time ~2 GB GGUF model download.`,

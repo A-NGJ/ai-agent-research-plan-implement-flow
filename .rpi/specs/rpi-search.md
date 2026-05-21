@@ -26,7 +26,7 @@ Then the response status is "empty" with no hits, distinguishable from any error
 ### Not-installed backend is reported with an install hint
 Given no semantic search backend is installed
 When a caller issues `rpi_search` with any query
-Then the response status is "backend_unavailable", states the reason, and includes an install hint and a suggested fallback path
+Then the response status is "backend_unavailable", states the reason, and includes an install hint naming the install command and `rpi search --warmup` as the primary remediation, with the keyword-fallback path listed as a secondary option
 
 ### Installed-but-failing backend surfaces diagnostic detail
 Given a semantic search backend is installed but a refresh, query, or output-parse step fails
@@ -38,10 +38,10 @@ Given a semantic search backend is installed but its required models or supporti
 When a caller issues `rpi_search`
 Then the response status is "backend_error" with a stage indicating first-run setup is required and a hint naming the user-invoked command that completes setup, and no setup is triggered automatically
 
-### Callers may auto-recover from the recoverable first-run state
-Given a caller (e.g. a skill) receives a "backend_error" with a recoverable first-run hint
-When that caller invokes the user-facing recovery command and re-issues the same query
-Then the second response reports the recovered state — the tool itself performed no setup, and the recovery happened entirely outside the tool call
+### Callers auto-recover from the recoverable first-run state
+Given a caller receives a "backend_error" with a recoverable first-run hint
+When that caller invokes `rpi search --warmup` and re-issues the same query before any fallback path
+Then the second response reports the recovered state; the tool itself performed no setup, and the caller did not fall back to keyword search without first attempting warmup
 
 ### Recent edits appear in keyword matches without manual re-indexing
 Given a semantic search backend is installed and ready, and the user has just written or edited an artifact in `.rpi/`
@@ -89,7 +89,7 @@ Then the response contains only artifacts from that project's `.rpi/` directory
 - The tool contract is backend-agnostic — request and response shapes describe intent and hits, not backend-specific fields.
 - Index freshness is guaranteed by the tool across both keyword and semantic paths; callers never need to trigger re-indexing.
 - Archive inclusion is on by default; callers opt out via an explicit flag.
-- The tool itself never installs the backend, downloads models, spawns a daemon, or otherwise mutates the user's environment. Callers (e.g. skills) MAY invoke the user-facing `rpi search --warmup` recovery command on the user's behalf in response to a `backend_error` carrying a recoverable first-run hint — that command is itself the user-invoked entry point and does not violate this constraint.
+- The tool itself never installs the backend, downloads models, spawns a daemon, or otherwise mutates the user's environment. Callers (e.g. skills) SHOULD invoke the user-facing `rpi search --warmup` recovery command on the user's behalf and re-issue the query before degrading to keyword fallback when a `backend_error` carries a recoverable first-run hint — that command is itself the user-invoked entry point and does not violate this constraint.
 
 ## Out of Scope
 
