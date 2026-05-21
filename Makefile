@@ -9,13 +9,15 @@ test:
 clean:
 	rm -f bin/rpi
 
+INSTALL_DIR ?= $(HOME)/.local/bin
+
 install: build
-	mkdir -p $(HOME)/.local/bin
-	rm -f $(HOME)/.local/bin/rpi
-	cp $(CURDIR)/bin/rpi $(HOME)/.local/bin/rpi
-	@echo "Installed rpi to ~/.local/bin/"
-	@echo "Make sure ~/.local/bin is in your PATH"
+	mkdir -p $(INSTALL_DIR)
+	rm -f $(INSTALL_DIR)/rpi
+	cp $(CURDIR)/bin/rpi $(INSTALL_DIR)/rpi
+	@echo "Installed rpi to $(INSTALL_DIR)/"
+	@echo "Make sure $(INSTALL_DIR) is in your PATH"
 
 uninstall:
-	rm -f $(HOME)/.local/bin/rpi
-	@echo "Removed rpi from ~/.local/bin/"
+	rm -f $(INSTALL_DIR)/rpi
+	@echo "Removed rpi from $(INSTALL_DIR)/"
