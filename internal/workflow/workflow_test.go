@@ -322,10 +322,14 @@ func TestPromptStructure_NoToolReferences(t *testing.T) {
 	// Skills exempt from the no-tool-references rule. rpi-handoff's design
 	// makes the literal `rpi resume` invocation load-bearing — embedding the
 	// CLI's verbatim output is the contract; abstracting the producer would
-	// weaken it. Add new exemptions sparingly and only with a written
-	// design-level reason.
+	// weaken it. rpi-spec-sync's design (Component 5 of
+	// .rpi/designs/2026-05-21-spec-drift-scan-mcp-tool-for-spec-sync.md)
+	// makes the `rpi_spec_drift_scan` MCP call the load-bearing SCAN-phase
+	// contract; the skill body must name the tool. Add new exemptions
+	// sparingly and only with a written design-level reason.
 	exempt := map[string]bool{
-		"rpi-handoff": true,
+		"rpi-handoff":   true,
+		"rpi-spec-sync": true,
 	}
 
 	entries, err := fs.ReadDir(assets, "assets/skills")

@@ -14,6 +14,7 @@ import (
 	"github.com/A-NGJ/rpi/internal/git"
 	"github.com/A-NGJ/rpi/internal/scanner"
 	"github.com/A-NGJ/rpi/internal/search"
+	"github.com/A-NGJ/rpi/internal/specdrift"
 	"github.com/A-NGJ/rpi/internal/split"
 	tmpl "github.com/A-NGJ/rpi/internal/template"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -210,6 +211,12 @@ func registerTools(s *mcp.Server) {
 		Name:        "rpi_split_score",
 		Description: mcpDescription(splitScoreCmd),
 	}, handleSplitScore)
+
+	// Spec drift scan
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "rpi_spec_drift_scan",
+		Description: mcpDescription(specDriftScanCmd),
+	}, handleSpecDriftScan)
 }
 
 // --- No-param tool handlers ---
@@ -649,4 +656,37 @@ func handleSplitScore(_ context.Context, _ *mcp.CallToolRequest, input splitScor
 		return nil, nil, err
 	}
 	return jsonResult(result)
+}
+
+type specDriftScanInput struct {
+	StaleDays int     `json:"stale_days,omitempty" jsonschema:"flag stale_last_updated when last_updated exceeds this many days (default 30)"`
+	RatioLow  float64 `json:"ratio_low,omitempty" jsonschema:"scenarios/refs ratio below this fires scenario_count_mismatch (default 0.5)"`
+	RatioHigh float64 `json:"ratio_high,omitempty" jsonschema:"scenarios/refs ratio above this fires scenario_count_mismatch (default 3.0)"`
+	SpecsDir  string  `json:"specs_dir,omitempty" jsonschema:"directory containing spec files (default .rpi/specs)"`
+}
+
+func handleSpecDriftScan(_ context.Context, _ *mcp.CallToolRequest, input specDriftScanInput) (*mcp.CallToolResult, any, error) {
+	opts := specdrift.ScanOptions{
+		StaleDays: input.StaleDays,
+		RatioLow:  input.RatioLow,
+		RatioHigh: input.RatioHigh,
+		SpecsDir:  input.SpecsDir,
+	}
+	// MCP clients can omit any field; fall back to the same defaults the
+	// CLI's cobra flags carry.
+	defaults := specdrift.DefaultOptions()
+	if opts.StaleDays == 0 {
+		opts.StaleDays = defaults.StaleDays
+	}
+	if opts.RatioLow == 0 {
+		opts.RatioLow = defaults.RatioLow
+	}
+	if opts.RatioHigh == 0 {
+		opts.RatioHigh = defaults.RatioHigh
+	}
+	records, err := specdrift.Scan(opts)
+	if err != nil {
+		return nil, nil, err
+	}
+	return jsonResult(records)
 }

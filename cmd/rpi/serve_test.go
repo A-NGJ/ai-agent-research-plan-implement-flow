@@ -421,6 +421,7 @@ func TestIntegration_AllToolsRegistered(t *testing.T) {
 		"rpi_archive_move",
 		"rpi_search",
 		"rpi_split_score",
+		"rpi_spec_drift_scan",
 	}
 
 	if len(res.Tools) != len(expectedTools) {
@@ -607,5 +608,36 @@ func TestHandleVerifyCompleteness(t *testing.T) {
 	}
 	if m["unchecked"] != float64(2) {
 		t.Errorf("expected 2 unchecked, got %v", m["unchecked"])
+	}
+}
+
+func TestHandleSpecDriftScan_ReturnsJSON(t *testing.T) {
+	dir := t.TempDir()
+	specsDir := filepath.Join(dir, "specs")
+	if err := os.Mkdir(specsDir, 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	body := "---\nfeature: x\nlast_updated: 2026-05-15T10:00:00+02:00\n---\n\n# X\n"
+	if err := os.WriteFile(filepath.Join(specsDir, "x.md"), []byte(body), 0644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	result, _, err := handleSpecDriftScan(context.Background(), nil, specDriftScanInput{SpecsDir: specsDir})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	text := extractText(t, result)
+	var records []map[string]any
+	if err := json.Unmarshal([]byte(text), &records); err != nil {
+		t.Fatalf("invalid JSON: %v\ntext: %s", err, text)
+	}
+	if len(records) != 1 {
+		t.Fatalf("expected 1 record, got %d: %s", len(records), text)
+	}
+	if _, ok := records[0]["path"].(string); !ok {
+		t.Errorf("record missing path string: %v", records[0])
+	}
+	if _, ok := records[0]["signals"]; !ok {
+		t.Errorf("record missing signals key: %v", records[0])
 	}
 }
