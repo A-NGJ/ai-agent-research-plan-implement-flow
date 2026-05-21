@@ -39,13 +39,14 @@ The MCP-server check uses `jq` if available (looks at `.mcpServers.rpi` specific
 skills_conflict=0
 mcp_conflict=0
 
-if find "$HOME/.claude/skills" -maxdepth 1 -name 'rpi-*' -type d 2>/dev/null | grep -q .; then
+skills_found="$(find "$HOME/.claude/skills" -maxdepth 1 -name 'rpi-*' -type d 2>/dev/null)"
+if [ -n "$skills_found" ]; then
   skills_conflict=1
 fi
 
 if ! command -v jq >/dev/null 2>&1; then
   # jq not available — use a targeted grep as fallback.
-  # Match "rpi" only when preceded by a double-quote within 5 lines after "mcpServers".
+  # Match "rpi" only when surrounded by double-quotes within 5 lines after "mcpServers".
   if [ -f "$HOME/.claude/settings.json" ] && grep -A5 '"mcpServers"' "$HOME/.claude/settings.json" 2>/dev/null | grep -q '"rpi"'; then
     mcp_conflict=1
   fi
@@ -56,7 +57,8 @@ else
 fi
 
 if [ "$skills_conflict" = 1 ]; then
-  echo "Standalone rpi skills found at ~/.claude/skills/rpi-*."
+  echo "Standalone rpi skills found:"
+  echo "$skills_found" | sed 's/^/  /'
   echo "This conflicts with the plugin install."
   echo "To remove: run 'rpi uninstall --global' (or '~/.rpi/bin/rpi uninstall --global' if rpi is not in PATH)."
   echo "Or manually: rm -rf ~/.claude/skills/rpi-*"
@@ -87,6 +89,18 @@ fi
 ```
 
 ### 3. Install (delegate to the project's `install.sh`)
+
+Before downloading, verify that `curl` is available. If not, exit with an actionable message:
+
+```sh
+if ! command -v curl >/dev/null 2>&1; then
+  echo "Required command not found: curl"
+  echo "Install it with: brew install jq curl   # macOS"
+  echo "                 apt install jq curl    # Debian/Ubuntu"
+  echo "Then re-run /rpi:rpi-setup."
+  exit 1
+fi
+```
 
 The repo already ships an `install.sh` that handles platform detection, version resolution, download, SHA256 verification, temp-dir cleanup via `trap`, and installation. Honour its `INSTALL_DIR` env var to target the plugin's well-known location (`~/.rpi/bin`) instead of the standalone default. One pipe; the script does the rest.
 
