@@ -101,48 +101,6 @@ to a sibling `.bak` file before the latest embedded version is written.
 No project-level artifacts (`.rpi/`, rules file, `.gitignore`) are
 created or modified.
 
-## Per-project bootstrap
-
-Once you've run `rpi init --global`, run `rpi bootstrap` once inside any
-git repo where you want to use the RPI workflow. It initializes the
-project's `.rpi/` tree, the rules file, and the `.gitignore` policy at
-the git root — without re-installing the user-scope skills, agents, or
-MCP server, which the global install already provides.
-
-The `rpi bootstrap` subcommand has four exit paths:
-
-- **Silent no-op** when the project already has a `.rpi/` (anywhere up
-  the directory tree).
-- **Silent no-op** when no user-level install exists at
-  `~/.claude/skills/rpi-research/` or `~/.config/opencode/skills/rpi-research/`.
-- **Silent no-op** when the cwd is not inside a git repository.
-- **Initialize** otherwise: creates `.rpi/<subdirs>/`, the rules file
-  (`CLAUDE.md` or `AGENTS.md` per detected target), and the standard
-  `.rpi/*` + `!.rpi/specs/` `.gitignore` entries — all at the git root,
-  regardless of which subdirectory the user is in. Prints exactly one
-  line to stderr:
-  `✓ Auto-initialized .rpi/ in <git-root> — skills inherited from <global-path>`
-
-The command is safe and idempotent — re-running it on an already-initialized
-project is a no-op.
-
-### What `rpi bootstrap` does NOT do
-
-It deliberately keeps the project's footprint minimal:
-
-- No `./.claude/` or `./.opencode/` directory is created — skills,
-  agents, hooks, and permissions are inherited from the global install.
-- No MCP server registration (already user-scope from `rpi init --global`).
-- No `settings.json` is written.
-
-If you later want a fully project-local install (skills, agents, etc.
-in `./.claude/`), run `rpi init` explicitly.
-
-### OpenCode users
-
-`rpi bootstrap` detects the target from the global install, so OpenCode
-users run the same command to get the same lite-init.
-
 ## Installation
 
 Build and install the `rpi` binary:

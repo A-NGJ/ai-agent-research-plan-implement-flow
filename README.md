@@ -107,14 +107,6 @@ rpi update --global                              # refresh the global install
 
 `--global` only writes to your user config directory — no `.rpi/`, `CLAUDE.md`, or `.gitignore` is touched at the user level, and your working directory is unchanged. See [docs/rpi-init.md](docs/rpi-init.md) for the full layout and conflict matrix.
 
-#### Per-project bootstrap
-
-Once a global install is in place, run `rpi bootstrap` from inside any git repo to inherit the global skills into that project — it creates `.rpi/`, the rules file (`CLAUDE.md` or `AGENTS.md`), and the standard `.gitignore` entries at the git root. The command is silent and idempotent: it exits cleanly when `.rpi/` already exists, no global install is present, or the cwd is outside a git repository.
-
-```bash
-rpi bootstrap
-```
-
 ### Try it
 
 ```
