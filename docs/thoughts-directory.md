@@ -4,7 +4,7 @@ All pipeline artifacts live in `.rpi/`, which is **tracked in git by default** (
 
 ```
 .rpi/
-├── research/            # Codebase research documents
+├── research/            # Research notes (codebase or external)
 ├── designs/             # Solution designs with trade-off analysis
 ├── diagnoses/           # Bug diagnosis post-mortems
 ├── plans/               # Implementation plans with checkboxes
