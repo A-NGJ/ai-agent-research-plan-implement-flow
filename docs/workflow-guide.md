@@ -32,7 +32,7 @@ One phase, two files modified, done in minutes.
 
 **Path: Propose -> Plan -> Implement**
 
-Use when the feature touches multiple files, involves a choice between approaches, or you're working in unfamiliar code. Optionally run `/rpi-research` first if you need to understand the codebase before proposing.
+Use when the feature touches multiple files, involves a choice between approaches, or you're working in unfamiliar code. Optionally run `/rpi-research` first if you need to understand the codebase -- or survey external systems/frameworks -- before proposing.
 
 **Example -- Add rate limiting to the API:**
 
@@ -41,6 +41,8 @@ Use when the feature touches multiple files, involves a choice between approache
 You:  /rpi-research How does the API middleware chain work? Where are requests authenticated and validated?
 ```
 Claude explores your codebase conversationally. You discuss findings interactively -- no artifact is created by default. If the exploration is thorough enough, you can ask it to save findings to `.rpi/research/`.
+
+For external-system questions (e.g., *"what agentic frameworks exist for a data analytics tool?"*), `/rpi-research` surveys docs, READMEs, and release notes instead of source files -- citing URLs or quoted documentation rather than `file:line` references.
 
 **Step 2: Propose**
 ```
@@ -111,7 +113,7 @@ Claude implements unit by unit. You can stop between units, come back the next d
 
 ## Not Sure Where to Start?
 
-Use `/rpi-research` even when you have a vague idea. It handles both focused questions ("how does auth work?") and open-ended research ("what could we improve about error handling?"). It's conversational -- you discuss findings interactively and decide whether to save research or move straight to `/rpi-propose`.
+Use `/rpi-research` even when you have a vague idea. It handles focused codebase questions ("how does auth work?"), open-ended exploration ("what could we improve about error handling?"), and external surveys ("what agentic frameworks exist for X?", "what's the state of vector databases in 2026?"). It's conversational -- you discuss findings interactively and decide whether to save research or move straight to `/rpi-propose`.
 
 ```
 You:  /rpi-research What could we improve about error handling?

@@ -19,7 +19,7 @@ This project uses a `.rpi/` directory for persistent context:
 
 ```
 .rpi/
-├── research/      # Codebase research notes (optional, from /rpi-research)
+├── research/      # Research notes (optional, from /rpi-research)
 ├── designs/       # Solution designs (created by /rpi-propose)
 ├── plans/         # Implementation plans (created by /rpi-plan)
 ├── specs/         # Living behavioral specs
@@ -32,7 +32,7 @@ This project uses a `.rpi/` directory for persistent context:
 
 Workflow: Research → Propose → Plan → Implement → Verify
 
-- **Research** (`/rpi-research`): Investigate the codebase. Optional.
+- **Research** (`/rpi-research`): Investigate the question (codebase or external). Optional.
 - **Propose** (`/rpi-propose`): Analyze trade-offs, write design + spec (behavioral contract). Approval gate.
 - **Plan** (`/rpi-plan`): Create phased implementation plan from approved spec.
 - **Implement** (`/rpi-implement`): Execute plan phase-by-phase with verification.

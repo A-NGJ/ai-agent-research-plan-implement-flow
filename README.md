@@ -74,7 +74,7 @@ Review the changes, approve, done. See the [full workflow guide](docs/workflow-g
 
 | Command | What It Does | Output |
 |---------|-------------|--------|
-| `/rpi-research` | Investigates the codebase -- conversational fact-finding | Conversation (optionally `.rpi/research/YYYY-MM-DD-topic.md`) |
+| `/rpi-research` | Investigates a question -- codebase or external, with conversational fact-finding | Conversation (optionally `.rpi/research/YYYY-MM-DD-topic.md`) |
 | `/rpi-propose` | Investigates, analyzes, and designs solutions with trade-offs | `.rpi/designs/YYYY-MM-DD-topic.md` + `.rpi/specs/feature.md` |
 | `/rpi-plan` | Creates phased implementation plan with success criteria | `.rpi/plans/YYYY-MM-DD-topic.md` |
 | `/rpi-implement` | Executes a plan phase-by-phase with verification | Code, tests, and commits |

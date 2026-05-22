@@ -2,13 +2,13 @@
 
 ## Research (`/rpi-research`)
 
-**Purpose:** Investigate the codebase -- conversational fact-finding with optional research artifact.
+**Purpose:** Investigate the question -- codebase exploration or external systems/libraries/frameworks, with conversational fact-finding and an optional research artifact.
 
-Works for both focused questions ("how does the auth pipeline work?") and open-ended exploration ("what could we improve about error handling?"). The command starts with a brief interview to understand motivation, prior attempts, and constraints, then investigates the codebase at a depth proportional to the question.
+Works for both focused questions ("how does the auth pipeline work?", "what's the state of vector databases in 2026?") and open-ended exploration ("what could we improve about error handling?", "what agentic frameworks exist for X?"). The command starts with a brief interview to understand motivation, prior attempts, and constraints, then investigates at a depth proportional to the question -- across the codebase, external sources, or both.
 
 Research is conversational by default -- no artifact is created unless you ask or it's clearly valuable for cross-session handoff. For broad queries, Claude shows initial findings and asks if you want to redirect focus before deep-diving.
 
-Findings include concrete file:line references. Facts are presented first; an opinionated assessment is offered only when warranted, clearly separated from the facts. If you want to save findings, ask Claude to write them to `.rpi/research/`.
+Findings carry source anchors: `file:line` references for codebase claims, URL or quoted documentation for external claims. Authoritative external sources (project README, official docs, release notes) are preferred; blog posts and forum threads are flagged as such. Facts are presented first; an opinionated assessment is offered only when warranted, clearly separated from the facts. If you want to save findings, ask Claude to write them to `.rpi/research/`.
 
 ## Propose (`/rpi-propose`)
 

@@ -13,7 +13,7 @@ cat <<'EOF'
 This project has the rpi plugin loaded. RPI is a Spec-Driven Development
 workflow with persistent artifacts under `.rpi/`:
 
-  .rpi/research/   codebase research notes
+  .rpi/research/   research notes (codebase or external)
   .rpi/designs/    solution designs (with tradeoffs)
   .rpi/specs/      living behavioral specs (source of truth)
   .rpi/plans/      phased implementation plans
@@ -27,7 +27,8 @@ workflow with persistent artifacts under `.rpi/`:
 
 Each step has a skill. Each skill suggests the next.
 
-  /rpi:rpi-research   Explore the codebase ("how does X work?"). Optional.
+  /rpi:rpi-research   Investigate a question — codebase ("how does X work?") or
+                  external ("what frameworks exist for X?"). Optional.
   /rpi:rpi-propose    Design a new feature with tradeoffs → produces design + spec.
                   Approval gate.
   /rpi:rpi-plan       Plan a scoped, concrete change → phased implementation plan.
