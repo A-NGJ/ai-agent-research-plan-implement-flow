@@ -12,7 +12,7 @@
       "name": "rpi",
       "source": "./claude-plugin",
       "description": "Research → Propose → Plan → Implement → Verify workflow for Claude Code. Spec-driven development with persistent artifacts under .rpi/.",
-      "version": "0.3.1",
+      "version": "0.3.3",
       "author": {
         "name": "A-NGJ",
         "url": "https://github.com/A-NGJ"
