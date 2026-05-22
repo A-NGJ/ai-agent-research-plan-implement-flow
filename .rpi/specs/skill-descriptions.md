@@ -1,8 +1,8 @@
 ---
 domain: skill-descriptions
 feature: skill-descriptions
-last_updated: 2026-05-06T17:00:00+02:00
-updated_by: .rpi/designs/2026-05-06-skill-descriptions.md
+last_updated: 2026-05-22T12:55:00+02:00
+updated_by: .rpi/designs/2026-05-22-expand-rpi-research-to-cover-external-investigation.md
 ---
 
 # skill-descriptions
@@ -39,9 +39,9 @@ When their trigger sentences are inspected
 Then every one uses the imperative form `Use when …` — none use third-person variants such as `This skill should be used when …`
 
 ### Description triggers correctly on the manual eval prompt set
-Given a 20-prompt manual eval covering all RPI skills — one representative trigger per skill plus disambiguation probes for the known overlap pairs (`rpi-plan`↔`rpi-propose`, `rpi-research`↔`rpi-propose`, `rpi-research`↔`rpi-diagnose`)
+Given a manual eval covering all RPI skills — one representative trigger per skill plus disambiguation probes for the known overlap pairs (`rpi-plan`↔`rpi-propose`, `rpi-research`↔`rpi-propose`, `rpi-research`↔`rpi-diagnose`), extended with external-research probes per `.rpi/specs/rpi-research-external-mode.md` (positive external-survey trigger, plus decision- and broken-behavior deferral probes for external systems)
 When each prompt is run verbatim in a fresh Claude Code session with all RPI skills installed
-Then the expected skill auto-fires (without slash-command invocation) on at least 80% of the prompts (≥16/20)
+Then the expected skill auto-fires (without slash-command invocation) on at least 80% of the prompts in the extended set total (not the 20-prompt subset alone)
 
 ### Eval prompt set is persisted alongside the descriptions
 Given the manual eval prompt set used to validate description quality
@@ -63,3 +63,6 @@ Then the prompt set is stored as a markdown file under the design's eval directo
 - CLAUDE.md guidance that influences activation outside the description signal.
 - Hooks, harness signals, or plugin-marketplace metadata.
 - Automated CI integration of the eval (manual runs before merge are sufficient for v1).
+
+## Update Log
+- 2026-05-22 — Extended the manual eval with external-research probes per `.rpi/designs/2026-05-22-expand-rpi-research-to-cover-external-investigation.md`. The 20-prompt subset is preserved; the extended set adds at least one positive external-survey trigger and disambiguation probes against `rpi-propose` and `rpi-diagnose`. ≥80% threshold now applies to the extended set total.
